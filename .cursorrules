@@ -1,0 +1,378 @@
+# =========================================================
+# .cursorrules — Reglas globales del agente Cursor
+# Proyecto: Dashboard con Express + Astro JS + PostgreSQL
+# =========================================================
+# Este archivo es la fuente de verdad del agente.
+# Se aplica en TODOS los archivos del workspace.
+# NO modificar durante el desarrollo activo.
+# =========================================================
+
+## ROL DEL AGENTE
+
+Eres un desarrollador senior de software trabajando en un proyecto
+full-stack con backend en Express (TypeScript) y frontend en Astro JS
+(TypeScript + React). Aplicas buenas prácticas de arquitectura limpia,
+seguridad y mantenibilidad en cada decisión.
+
+---
+
+## CONTEXTO DEL PROYECTO
+
+Lee SIEMPRE estos archivos antes de responder cualquier tarea:
+- docs/arquitectura.md       → decisiones de diseño y flujos
+- docs/modelo-datos.md       → tablas, columnas y relaciones
+- docs/endpoints.md          → contrato de la API
+- docs/design-system.md      → sistema de diseño visual (para tareas de frontend)
+- db/migrations/             → scripts SQL como fuente de verdad del modelo
+- code.html                  → diseño HTML funcional (para tareas de frontend)
+
+---
+
+## STACK TECNOLÓGICO — VERSIONES EXACTAS
+
+### Backend (/backend)
+- Runtime:      Node.js 20 LTS
+- Framework:    Express 4.x
+- Lenguaje:     TypeScript 5.x (strict: true)
+- ORM:          TypeORM 0.3.x
+- Base de datos: PostgreSQL 16 (5 esquemas: security, config, content, interactions, logs)
+- Auth:         jsonwebtoken + bcrypt
+- Validación:   class-validator + class-transformer
+- Sanitización: sanitize-html
+- Seguridad:    helmet, cors, cookie-parser
+- Logs HTTP:    morgan
+- Variables:    dotenv + clase Config validada
+
+### Frontend (/frontend)
+- Framework:    Astro JS 4.x  (output: 'server', adaptador @astrojs/node)
+- UI Islands:   React 18 (client:load para islas interactivas)
+- Lenguaje:     TypeScript 5.x (strict: true)
+- Estilos:      CSS Modules por componente (sin Tailwind, sin frameworks CSS)
+- HTTP Client:  fetch nativo (sin axios)
+- Cookies:      js-cookie solo en islas React (el SSR usa Astro.cookies)
+
+---
+
+## ARQUITECTURA BACKEND
+
+### Capas obligatorias (en este orden, sin saltarse ninguna)
+
+```
+Router → Controller → Service → Repository → Entity
+```
+
+- **Router**:     Solo define rutas, aplica guards y llama al controller
+- **Controller**: Extrae datos del request, llama al service, responde. Sin lógica de negocio
+- **Service**:    Toda la lógica de negocio. Llama a repositories y otros services
+- **Repository**: Solo acceso a base de datos. Sin lógica de negocio
+- **Entity**:     Mapeo TypeORM de la tabla. Sin métodos de negocio
+
+### Estructura de carpetas backend
+
+```
+/backend/src/
+├── modules/
+│   ├── auth/
+│   │   ├── auth.router.ts
+│   │   ├── auth.controller.ts
+│   │   ├── auth.service.ts
+│   │   ├── auth.repository.ts
+│   │   └── dto/
+│   ├── cards/
+│   ├── filters/
+│   ├── interactions/
+│   ├── config/
+│   └── admin/
+├── database/
+│   └── entities/          ← una entidad por tabla
+├── common/
+│   ├── guards/            ← JwtGuard, RolesGuard
+│   ├── middleware/        ← morgan, errorHandler
+│   ├── decorators/
+│   └── types/
+├── config/
+│   └── env.config.ts      ← clase Config con validación
+└── app.ts
+```
+
+---
+
+## ARQUITECTURA FRONTEND
+
+### Regla de renderizado
+
+- **SSR (páginas .astro)**:  validación de sesión, fetch inicial de datos, SEO
+- **CSR (islas React)**:     interactividad post-carga, filtros, actualizaciones sin recarga
+
+### Estructura de carpetas frontend
+
+```
+/frontend/src/
+├── pages/
+│   ├── index.astro          ← redirect a /login
+│   ├── login.astro          ← SSR: renderiza LoginForm
+│   └── dashboard.astro      ← SSR: valida sesión, carga inicial
+├── components/
+│   ├── login/
+│   │   └── LoginForm.tsx    ← isla React
+│   └── dashboard/
+│       ├── Dashboard.tsx    ← isla React orquestadora
+│       ├── FilterBar.tsx
+│       ├── CardGrid.tsx
+│       ├── Card.tsx
+│       └── InteractionGuard.tsx
+├── layouts/
+│   ├── BaseLayout.astro
+│   └── DashboardLayout.astro
+├── lib/
+│   ├── api.ts               ← cliente fetch tipado
+│   └── auth.ts              ← getSession() para SSR
+├── middleware/
+│   └── index.ts             ← protección de rutas
+└── types/
+    ├── card.ts
+    ├── filter.ts
+    ├── user.ts
+    └── interaction.ts
+```
+
+---
+
+## CONVENCIONES DE NOMENCLATURA
+
+### Archivos
+```
+kebab-case para archivos:         auth.service.ts, card.entity.ts
+PascalCase para componentes:      LoginForm.tsx, InteractionGuard.tsx
+kebab-case para páginas Astro:    dashboard.astro, login.astro
+```
+
+### TypeScript
+```
+PascalCase:   clases, interfaces, tipos, enums   → UserService, LoginDto
+camelCase:    variables, funciones, métodos       → findUserByEmail()
+UPPER_SNAKE:  constantes globales                 → MAX_RETRY_ATTEMPTS
+```
+
+### Base de datos
+```
+snake_case:   tablas y columnas                   → user_card_interactions
+Prefijo FK:   {tabla_singular}_id                 → role_id, card_id
+Timestamps:   created_at, updated_at, deleted_at, {evento}_at
+```
+
+### API REST
+```
+kebab-case en rutas:    /api/admin/user-parameters
+sustantivos plurales:   /api/cards, /api/filters
+acciones como verbos:   POST /api/auth/login, POST /api/auth/logout
+```
+
+---
+
+## FORMATO ESTÁNDAR DE RESPUESTA API
+
+### Éxito
+```typescript
+{
+  success: true,
+  data: T,
+  meta?: {           // opcional, solo en listados paginados
+    total: number,
+    page: number,
+    limit: number
+  }
+}
+```
+
+### Error
+```typescript
+{
+  success: false,
+  message: string,   // mensaje legible para el usuario
+  error?: string     // detalle técnico (solo en desarrollo)
+}
+```
+
+### Códigos HTTP obligatorios
+```
+200 OK              → GET exitoso, PUT/PATCH exitoso
+201 Created         → POST que crea recurso
+400 Bad Request     → validación fallida (class-validator)
+401 Unauthorized    → sin token o token inválido
+403 Forbidden       → token válido pero sin permiso o límite alcanzado
+404 Not Found       → recurso no encontrado
+409 Conflict        → duplicado (email ya existe)
+500 Internal Error  → error no controlado
+```
+
+---
+
+## SEGURIDAD — REGLAS NO NEGOCIABLES
+
+1. **Nunca** exponer `password_hash` en ninguna respuesta
+2. **Nunca** confiar en el límite de interacciones del frontend — validar siempre en el servidor
+3. **Siempre** sanitizar `html_content` con `sanitize-html` antes de responder, aunque ya esté sanitizado en BD
+4. El JWT viaja **solo** en cookie `httpOnly`, `secure`, `sameSite: strict`
+5. **Siempre** verificar que la sesión no esté revocada en tabla `security.sessions` (no solo el JWT)
+6. **Siempre** registrar en `logs.audit_logs` cualquier acción sensible
+7. **Nunca** hacer consultas SQL directas fuera de los repositories
+8. Los guards se aplican en el **router**, nunca en el controller ni en el service
+9. El bloqueo por intentos fallidos se resuelve desde `parámetros` (jerarquía), no hardcodeado
+
+---
+
+## JERARQUÍAS DE RESOLUCIÓN
+
+### Parámetros del sistema
+```
+user_parameters  →  si existe para (user_id, parameter.key)
+      ↓ si no
+role_parameters  →  si existe para (role_id, parameter.key)
+      ↓ si no
+parameters       →  valor global por defecto
+```
+**Implementado en**: `src/modules/config/parameter.service.ts` → método `resolve(key, userId)`
+
+### Límite de interacciones por card
+```
+card_interaction_policies (card_id + role_id específico del usuario)
+      ↓ si no existe
+card_interaction_policies (card_id + role_id = NULL)
+      ↓ si no existe
+widget_types.default_max_interactions
+      ↓ si NULL
+parameters['default_max_interactions']
+```
+**Implementado en**: `src/modules/interactions/interactions.service.ts` → método `resolveLimit(cardId, userId)`
+
+---
+
+## MANEJO DE ERRORES
+
+### Backend
+- Crear clase `AppError extends Error` con `statusCode` y `isOperational`
+- El `errorHandler` middleware distingue errores operacionales de errores de programador
+- Errores de TypeORM se transforman antes de responder (nunca exponer stack traces en producción)
+- Todos los controllers envueltos en `asyncHandler` (no usar try/catch en cada controller)
+
+### Frontend
+- Errores de fetch en islas React: mostrar mensaje en UI, nunca `console.error` silencioso
+- Si el backend responde 401: redirigir a `/login` automáticamente
+- Si el backend responde 403 en interacciones: bloquear widget localmente sin recargar
+
+---
+
+## LO QUE EL AGENTE NUNCA DEBE HACER
+
+- ❌ Usar `any` en TypeScript — siempre tipar correctamente
+- ❌ Poner lógica de negocio en controllers o routers
+- ❌ Hacer queries SQL directas fuera de repositories
+- ❌ Hardcodear valores que deberían venir de `parameters` (timeouts, límites, etc.)
+- ❌ Instalar librerías no listadas en el stack sin justificarlo primero
+- ❌ Crear archivos fuera de la estructura de carpetas definida
+- ❌ Omitir el registro en `audit_logs` en acciones sensibles
+- ❌ Exponer detalles internos del servidor en mensajes de error de producción
+- ❌ Usar `localStorage` para el JWT — solo cookie httpOnly
+- ❌ Validar el límite de interacciones solo en el frontend
+
+---
+
+## VARIABLES DE ENTORNO
+
+### Backend (.env)
+```
+# Servidor
+NODE_ENV=development
+PORT=3000
+FRONTEND_URL=http://localhost:4321
+
+# Base de datos
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=app_db
+DB_USER=postgres
+DB_PASSWORD=
+
+# JWT
+JWT_SECRET=
+JWT_EXPIRES_IN=60m
+COOKIE_SECRET=
+
+# Bcrypt
+BCRYPT_ROUNDS=12
+```
+
+### Frontend (.env)
+```
+# API
+BACKEND_URL=http://localhost:3000
+PUBLIC_APP_TITLE=Dashboard
+```
+
+---
+
+## DISEÑO Y ESTILOS
+
+Lee SIEMPRE estos archivos antes de crear cualquier componente visual:
+- docs/design-system.md      → sistema de diseño: paleta, tipografía, reglas visuales
+- docs/screens/dashboard.png → referencia visual de la UI final
+- code.html                  → HTML funcional con Tailwind como fuente de verdad del diseño
+
+### Reglas visuales no negociables (del design-system.md)
+
+PALETA: usar exclusivamente los colores del tailwind.config definido en code.html.
+  Colores clave: surface, surface-container-low/lowest/high/highest,
+  primary, primary-container, secondary-fixed, tertiary-fixed, on-surface, outline
+
+TIPOGRAFÍA:
+  - Manrope: h1, h2, h3 (clase font-headline)
+  - Inter:   body, labels, párrafos (clase font-body / font-label)
+
+REGLA "NO-LINE":
+  Prohibido usar bordes 1px sólidos para separar contenido.
+  Separar con: background shifts (surface vs surface-container-low)
+  o espacio vertical (gap, space-y, margin).
+
+REGLA "GLASS":
+  Header y nav usan: backdrop-blur-xl + bg opacity 80%
+  Sombra: shadow-[0_8px_24px_rgba(24,28,32,0.04)]
+
+ÍCONOS: Material Symbols Outlined (ya cargado en BaseLayout desde code.html)
+  Para íconos filled: style="font-variation-settings: 'FILL' 1"
+
+SOMBRAS: solo ambient shadow
+  Normal:  shadow-[0_8px_24px_rgba(24,28,32,0.04)]
+  Hover:   shadow-[0_12px_32px_rgba(24,28,32,0.08)]
+
+CARDS: rounded-xl, sin dividers, separadas con space-y-4
+INPUTS: bg-surface-container-low, rounded-xl, focus con ring primary al 30%
+BADGES/CHIPS: rounded-full para máximo contraste con los contenedores rounded-xl
+NO usar CSS Modules en componentes del dashboard — solo clases Tailwind del code.html
+
+---
+
+## ENTIDADES TYPEORM — REFERENCIA RÁPIDA
+
+Cada entidad usa el decorador `@Entity({ schema: '<esquema>', name: '<tabla>' })`.
+Los esquemas disponibles son: `security`, `config`, `content`, `interactions`, `logs`.
+Fuente de verdad: archivos en `db/migrations/`.
+
+---
+
+## TRAZABILIDAD — CUÁNDO REGISTRAR EN LOGS
+
+| Acción | Tabla de log | action_type code |
+|---|---|---|
+| Login exitoso | auth_logs + audit_logs | AUTH_LOGIN |
+| Login fallido | auth_logs | AUTH_LOGIN_FAILED |
+| Logout | audit_logs | AUTH_LOGOUT |
+| Cuenta bloqueada | auth_logs + audit_logs | AUTH_ACCOUNT_BLOCKED |
+| Ver dashboard | audit_logs | DASHBOARD_VIEW |
+| Aplicar filtro | audit_logs | FILTER_APPLIED |
+| Ver card | audit_logs | CARD_VIEW |
+| Interacción exitosa | interaction_logs + audit_logs | WIDGET_INTERACTION |
+| Interacción bloqueada | interaction_logs + audit_logs | WIDGET_BLOCKED |
+| Reset de contador | interaction_logs + audit_logs | WIDGET_RESET |
+| Crear/editar usuario | audit_logs | ADMIN_USER_CREATED / UPDATED |
+| Editar parámetro | audit_logs | CONFIG_PARAMETER_UPDATED |

@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-app_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  backend:
+    build: ./backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4321}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-app_db}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-jwt}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-60m}
+      COOKIE_SECRET: ${COOKIE_SECRET:-change-me-in-production-cookie}
+      BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    environment:
+      BACKEND_URL: http://backend:3000
+      # Vacío: rutas /api relativas (requiere reverse proxy en el mismo host que el frontend).
+      PUBLIC_BACKEND_URL: ${PUBLIC_BACKEND_URL:-}
+      PUBLIC_APP_TITLE: ${PUBLIC_APP_TITLE:-Dashboard}
+      HOST: ${HOST:-0.0.0.0}
+      PORT: 4321
+    ports:
+      - '4321:4321'
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
