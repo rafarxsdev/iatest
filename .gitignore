@@ -1,0 +1,29 @@
+# Variables de entorno (no secretos en el repo)
+.env
+.env.local
+**/.env
+!**/.env.example
+
+# Dependencias y artefactos de build
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+frontend/.astro/
+
+# Logs
+*.log
+db/install.log
+
+# Herramientas locales
+backend/cookies.txt
+
+# Archivos binarios / artefactos opcionales
+*.zip
+
+# Sistema operativo
+.DS_Store
+
+# Metadatos locales del IDE (reglas globales en .cursorrules en raíz)
+.cursor/
+.claude/
