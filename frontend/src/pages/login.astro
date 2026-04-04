@@ -1,0 +1,16 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+import LoginForm from '@components/login/LoginForm.tsx';
+
+if (Astro.locals.user) {
+  return Astro.redirect('/dashboard');
+}
+
+const title = `${import.meta.env.PUBLIC_APP_TITLE ?? 'App'} — Iniciar sesión`;
+---
+
+<BaseLayout title={title}>
+  <div class="flex min-h-screen w-full items-center justify-center px-4 py-10">
+    <LoginForm client:load />
+  </div>
+</BaseLayout>

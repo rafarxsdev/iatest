@@ -1,0 +1,38 @@
+---
+import DashboardLayout from '@layouts/DashboardLayout.astro';
+import Dashboard from '@components/dashboard/Dashboard.tsx';
+import { ApiHttpError, getCards, getFilters } from '@lib/api';
+import type { Card } from '@types/card';
+import type { Filter } from '@types/filter';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+
+const cookieHeader = Astro.request.headers.get('cookie') ?? '';
+const appTitle = import.meta.env.PUBLIC_APP_TITLE ?? 'Dashboard';
+
+let filters: Filter[] = [];
+let cards: Card[] = [];
+let initialTotal = 0;
+
+try {
+  const [f, cardResult] = await Promise.all([getFilters(cookieHeader), getCards({}, cookieHeader)]);
+  filters = f;
+  cards = cardResult.data;
+  initialTotal = cardResult.meta.total;
+} catch (e) {
+  if (e instanceof ApiHttpError && e.status === 401) {
+    return Astro.redirect('/login');
+  }
+  throw e;
+}
+---
+
+<DashboardLayout user={user}>
+  <main class="pt-20 px-4 pb-36 max-w-screen-xl mx-auto w-full">
+    <h1 class="font-headline text-2xl font-bold text-on-surface tracking-tight mb-6">{appTitle}</h1>
+    <Dashboard client:load filters={filters} initialCards={cards} initialTotal={initialTotal} user={user} />
+  </main>
+</DashboardLayout>
