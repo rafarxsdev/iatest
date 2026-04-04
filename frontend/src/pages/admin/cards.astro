@@ -1,0 +1,53 @@
+---
+import DashboardLayout from '@layouts/DashboardLayout.astro';
+import { AdminCardsManager } from '@components/admin/cards';
+import { ApiHttpError, getAdminCards, getFilters, getWidgetTypes } from '@lib/api';
+import { canAccessAdminCards } from '@lib/auth';
+import type { AdminCard } from '@types/card';
+import type { Filter, WidgetTypeOption } from '@types/filter';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+
+if (!canAccessAdminCards(user)) {
+  return Astro.redirect('/dashboard');
+}
+
+const cookieHeader = Astro.request.headers.get('cookie') ?? '';
+
+let cards: AdminCard[] = [];
+let total = 0;
+let filters: Filter[] = [];
+let widgetTypes: WidgetTypeOption[] = [];
+
+try {
+  const [c, f, w] = await Promise.all([
+    getAdminCards({ page: 1, limit: 20 }, cookieHeader),
+    getFilters(cookieHeader),
+    getWidgetTypes(cookieHeader),
+  ]);
+  cards = c.data;
+  total = c.meta.total;
+  filters = f;
+  widgetTypes = w;
+} catch (e) {
+  if (e instanceof ApiHttpError && e.status === 401) {
+    return Astro.redirect('/login');
+  }
+  throw e;
+}
+---
+
+<DashboardLayout user={user}>
+  <main class="pt-20 px-4 pb-36 max-w-screen-xl mx-auto w-full">
+    <AdminCardsManager
+      client:load
+      initialCards={cards}
+      initialTotal={total}
+      filters={filters}
+      widgetTypes={widgetTypes}
+    />
+  </main>
+</DashboardLayout>

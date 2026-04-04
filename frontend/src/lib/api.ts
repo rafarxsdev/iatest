@@ -1,5 +1,5 @@
-import type { Card } from '@types/card';
-import type { Filter } from '@types/filter';
+import type { AdminCard, Card, CardFormData } from '@types/card';
+import type { Filter, WidgetTypeOption } from '@types/filter';
 import type { InteractionStatus } from '@types/interaction';
 import type { User } from '@types/user';
 
@@ -229,6 +229,90 @@ export async function postLogin(email: string, password: string): Promise<{ user
 
 export async function postLogout(): Promise<void> {
   const r = await apiFetch<null>('/api/auth/logout', { method: 'POST' });
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+}
+
+export async function getAdminCards(
+  params: { page?: number; limit?: number; search?: string },
+  cookieHeader?: string,
+): Promise<{ data: AdminCard[]; meta: { total: number; page: number; limit: number } }> {
+  const q = new URLSearchParams();
+  if (params.page !== undefined) {
+    q.set('page', String(params.page));
+  }
+  if (params.limit !== undefined) {
+    q.set('limit', String(params.limit));
+  }
+  if (params.search !== undefined && params.search.length > 0) {
+    q.set('search', params.search);
+  }
+  const qs = q.toString();
+  const path = qs ? `/api/admin/cards?${qs}` : '/api/admin/cards';
+  const r = await apiFetch<AdminCard[]>(path, { method: 'GET' }, cookieHeader);
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  if (!r.meta) {
+    throw new Error('Respuesta de cards admin sin meta');
+  }
+  return { data: r.data, meta: r.meta };
+}
+
+export async function getWidgetTypes(cookieHeader?: string): Promise<WidgetTypeOption[]> {
+  const r = await apiFetch<WidgetTypeOption[]>('/api/admin/widget-types', { method: 'GET' }, cookieHeader);
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  return r.data;
+}
+
+export async function createCard(data: CardFormData): Promise<AdminCard> {
+  const body = {
+    title: data.title,
+    htmlContent: data.htmlContent,
+    filterId: data.filterId,
+    widgetTypeId: data.widgetTypeId,
+    widgetConfiguration: data.widgetConfiguration,
+    sortOrder: data.sortOrder,
+  };
+  const r = await apiFetch<AdminCard>('/api/admin/cards', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  return r.data;
+}
+
+export async function updateCard(id: string, data: Partial<CardFormData>): Promise<AdminCard> {
+  const r = await apiFetch<AdminCard>(`/api/admin/cards/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  return r.data;
+}
+
+export async function deleteCard(id: string): Promise<void> {
+  const r = await apiFetch<null>(`/api/admin/cards/${id}`, { method: 'DELETE' });
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+}
+
+export async function restoreCard(id: string): Promise<void> {
+  const r = await apiFetch<AdminCard>(`/api/admin/cards/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deletedAt: null }),
+  });
   if (!r.success) {
     throw new Error(r.message);
   }
