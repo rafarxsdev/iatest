@@ -19,6 +19,10 @@ import { createParametersRouter } from './parameters/parameters.router';
 import { ParametersRepository } from './parameters/parameters.repository';
 import { ParametersService } from './parameters/parameters.service';
 import { ParametersController } from './parameters/parameters.controller';
+import { createAdminWidgetTypesRouter } from './widget-types/widget-types.router';
+import { AdminWidgetTypesRepository } from './widget-types/widget-types.repository';
+import { AdminWidgetTypesService } from './widget-types/widget-types.service';
+import { AdminWidgetTypesController } from './widget-types/widget-types.controller';
 
 const authRepository = new AuthRepository(AppDataSource);
 const parameterRepository = new ParameterRepository(AppDataSource);
@@ -40,6 +44,10 @@ const parametersRepository = new ParametersRepository(AppDataSource);
 const parametersService = new ParametersService(parametersRepository, authRepository);
 const parametersController = new ParametersController(parametersService);
 
+const adminWidgetTypesRepository = new AdminWidgetTypesRepository(AppDataSource);
+const adminWidgetTypesService = new AdminWidgetTypesService(adminWidgetTypesRepository);
+const adminWidgetTypesController = new AdminWidgetTypesController(adminWidgetTypesService);
+
 export const adminRouter = Router();
 
 adminRouter.use(jwtGuard);
@@ -47,3 +55,4 @@ adminRouter.use('/users', createUsersRouter(usersController));
 adminRouter.use('/cards', createAdminCardsRouter(adminCardsController));
 adminRouter.use('/policies', createPoliciesRouter(policiesController));
 adminRouter.use('/parameters', createParametersRouter(parametersController));
+adminRouter.use('/widget-types', createAdminWidgetTypesRouter(adminWidgetTypesController));

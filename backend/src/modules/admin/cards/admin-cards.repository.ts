@@ -1,5 +1,5 @@
 import type { DataSource } from 'typeorm';
-import { IsNull } from 'typeorm';
+import { IsNull, Not } from 'typeorm';
 import { Card } from '@database/entities/card.entity';
 import { Filter } from '@database/entities/filter.entity';
 import { WidgetType } from '@database/entities/widget-type.entity';
@@ -17,6 +17,8 @@ export interface UpdateAdminCardRow {
   title?: string;
   htmlContent?: string;
   filterId?: string;
+  widgetTypeId?: string;
+  widgetConfiguration?: Record<string, unknown>;
   isActive?: boolean;
   sortOrder?: number;
 }
@@ -39,8 +41,33 @@ export class AdminCardsRepository {
   async findByIdActive(id: string): Promise<Card | null> {
     return this.dataSource.getRepository(Card).findOne({
       where: { id, deletedAt: IsNull() },
-      relations: { filter: true, widgetType: true },
+      relations: { filter: { filterType: true }, widgetType: true },
     });
+  }
+
+  /** Incluye eliminadas; relaciones para respuesta admin. */
+  async findByIdWithRelations(id: string): Promise<Card | null> {
+    return this.dataSource.getRepository(Card).findOne({
+      where: { id },
+      relations: { filter: { filterType: true }, widgetType: true },
+    });
+  }
+
+  async findByIdSoftDeleted(id: string): Promise<Card | null> {
+    return this.dataSource.getRepository(Card).findOne({
+      where: { id, deletedAt: Not(IsNull()) },
+      relations: { filter: { filterType: true }, widgetType: true },
+    });
+  }
+
+  async restore(id: string): Promise<Card | null> {
+    const card = await this.findByIdSoftDeleted(id);
+    if (!card) {
+      return null;
+    }
+    card.deletedAt = null;
+    card.updatedAt = new Date();
+    return this.dataSource.getRepository(Card).save(card);
   }
 
   async create(row: CreateAdminCardRow): Promise<Card> {
@@ -74,6 +101,12 @@ export class AdminCardsRepository {
     if (row.filterId !== undefined) {
       card.filter = { id: row.filterId } as Filter;
     }
+    if (row.widgetTypeId !== undefined) {
+      card.widgetType = { id: row.widgetTypeId } as WidgetType;
+    }
+    if (row.widgetConfiguration !== undefined) {
+      card.widgetConfiguration = row.widgetConfiguration;
+    }
     if (row.isActive !== undefined) {
       card.isActive = row.isActive;
     }
@@ -90,5 +123,28 @@ export class AdminCardsRepository {
       { deletedAt: new Date(), updatedAt: new Date() },
     );
     return (res.affected ?? 0) > 0;
+  }
+
+  async findAllPaginated(
+    page: number,
+    limit: number,
+    search?: string,
+  ): Promise<{ cards: Card[]; total: number }> {
+    const qb = this.dataSource
+      .getRepository(Card)
+      .createQueryBuilder('c')
+      .leftJoinAndSelect('c.filter', 'f')
+      .leftJoinAndSelect('f.filterType', 'ft')
+      .leftJoinAndSelect('c.widgetType', 'wt');
+
+    if (search !== undefined && search.trim() !== '') {
+      const term = `%${search.trim()}%`;
+      qb.andWhere('c.title ILIKE :term', { term });
+    }
+
+    qb.orderBy('c.createdAt', 'DESC').skip((page - 1) * limit).take(limit);
+
+    const [cards, total] = await qb.getManyAndCount();
+    return { cards, total };
   }
 }
