@@ -23,6 +23,14 @@ import { createAdminWidgetTypesRouter } from './widget-types/widget-types.router
 import { AdminWidgetTypesRepository } from './widget-types/widget-types.repository';
 import { AdminWidgetTypesService } from './widget-types/widget-types.service';
 import { AdminWidgetTypesController } from './widget-types/widget-types.controller';
+import { createAdminFilterTypesRouter } from './filter-types/filter-types.router';
+import { AdminFilterTypesRepository } from './filter-types/filter-types.repository';
+import { AdminFilterTypesService } from './filter-types/filter-types.service';
+import { AdminFilterTypesController } from './filter-types/filter-types.controller';
+import { createAdminFiltersRouter } from './filters/filters.router';
+import { AdminFiltersRepository } from './filters/filters.repository';
+import { AdminFiltersService } from './filters/filters.service';
+import { AdminFiltersController } from './filters/filters.controller';
 
 const authRepository = new AuthRepository(AppDataSource);
 const parameterRepository = new ParameterRepository(AppDataSource);
@@ -48,6 +56,14 @@ const adminWidgetTypesRepository = new AdminWidgetTypesRepository(AppDataSource)
 const adminWidgetTypesService = new AdminWidgetTypesService(adminWidgetTypesRepository);
 const adminWidgetTypesController = new AdminWidgetTypesController(adminWidgetTypesService);
 
+const adminFilterTypesRepository = new AdminFilterTypesRepository(AppDataSource);
+const adminFilterTypesService = new AdminFilterTypesService(adminFilterTypesRepository);
+const adminFilterTypesController = new AdminFilterTypesController(adminFilterTypesService);
+
+const adminFiltersRepository = new AdminFiltersRepository(AppDataSource);
+const adminFiltersService = new AdminFiltersService(adminFiltersRepository, authRepository);
+const adminFiltersController = new AdminFiltersController(adminFiltersService);
+
 export const adminRouter = Router();
 
 adminRouter.use(jwtGuard);
@@ -56,3 +72,5 @@ adminRouter.use('/cards', createAdminCardsRouter(adminCardsController));
 adminRouter.use('/policies', createPoliciesRouter(policiesController));
 adminRouter.use('/parameters', createParametersRouter(parametersController));
 adminRouter.use('/widget-types', createAdminWidgetTypesRouter(adminWidgetTypesController));
+adminRouter.use('/filter-types', createAdminFilterTypesRouter(adminFilterTypesController));
+adminRouter.use('/filters', createAdminFiltersRouter(adminFiltersController));
