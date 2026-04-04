@@ -1,0 +1,52 @@
+---
+import DashboardLayout from '@layouts/DashboardLayout.astro';
+import { AdminFiltersManager } from '@components/admin/filters';
+import { ApiHttpError, getAdminFilters, getFilterTypes } from '@lib/api';
+import type { AdminFilter } from '@types/filter';
+import type { FilterType } from '@types/filter';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+
+if (user.role !== 'admin') {
+  return Astro.redirect('/dashboard');
+}
+
+const cookieHeader = Astro.request.headers.get('cookie') ?? '';
+
+let initialFilters: AdminFilter[] = [];
+let total = 0;
+let filterTypes: FilterType[] = [];
+let allFilters: AdminFilter[] = [];
+
+try {
+  const [listRes, types, allRes] = await Promise.all([
+    getAdminFilters({ page: 1, limit: 20 }, cookieHeader),
+    getFilterTypes(cookieHeader),
+    getAdminFilters({ page: 1, limit: 100 }, cookieHeader),
+  ]);
+  initialFilters = listRes.data;
+  total = listRes.meta.total;
+  filterTypes = types;
+  allFilters = allRes.data;
+} catch (e) {
+  if (e instanceof ApiHttpError && e.status === 401) {
+    return Astro.redirect('/login');
+  }
+  throw e;
+}
+---
+
+<DashboardLayout user={user}>
+  <main class="pt-20 px-4 pb-36 max-w-screen-xl mx-auto w-full">
+    <AdminFiltersManager
+      client:load
+      initialFilters={initialFilters}
+      initialTotal={total}
+      filterTypes={filterTypes}
+      allFilters={allFilters}
+    />
+  </main>
+</DashboardLayout>
