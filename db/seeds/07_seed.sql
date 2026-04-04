@@ -168,6 +168,9 @@ INSERT INTO logs.action_types (code, module, description) VALUES
   ('ADMIN_CARD_UPDATED',     'admin',     'Card modificada'),
   ('ADMIN_CARD_DELETED',     'admin',     'Card eliminada (soft delete)'),
   ('ADMIN_CARDS_LISTED',     'admin',     'Listado de cards consultado en administración'),
+  ('ADMIN_FILTER_CREATED',   'admin',     'Filtro del dashboard creado'),
+  ('ADMIN_FILTER_DEACTIVATED','admin',    'Filtro del dashboard desactivado'),
+  ('ADMIN_FILTER_RESTORED',  'admin',     'Filtro del dashboard reactivado'),
   -- Config
   ('CONFIG_PARAMETER_UPDATED','config',   'Parámetro del sistema modificado'),
   ('CONFIG_POLICY_UPDATED',  'config',    'Política de interacción modificada'),
