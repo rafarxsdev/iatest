@@ -1,5 +1,6 @@
 import type { DataSource } from 'typeorm';
 import { IsNull, MoreThan } from 'typeorm';
+import { getEnvConfig } from '@config/env.config';
 import { User } from '@database/entities/user.entity';
 import { UserSecurityStatus } from '@database/entities/user-security-status.entity';
 import { Session } from '@database/entities/session.entity';
@@ -62,7 +63,13 @@ export class AuthRepository {
   async findActiveUserById(userId: string): Promise<User | null> {
     return this.dataSource.getRepository(User).findOne({
       where: { id: userId, isActive: true, deletedAt: IsNull() },
-      relations: { role: true },
+      relations: {
+        role: {
+          rolePermissions: {
+            permission: true,
+          },
+        },
+      },
     });
   }
 
@@ -160,7 +167,11 @@ export class AuthRepository {
   async createAuditLog(input: CreateAuditLogInput): Promise<void> {
     const actionType = await this.findActionTypeByCode(input.actionTypeCode);
     if (!actionType) {
-      throw new Error(`action_type no encontrado: ${input.actionTypeCode}`);
+      /** Sin fila en `logs.action_types` (p. ej. migración 06 no aplicada): no romper la petición. */
+      if (getEnvConfig().nodeEnv === 'development') {
+        console.warn(`[audit] action_type no encontrado, registro omitido: ${input.actionTypeCode}`);
+      }
+      return;
     }
     const log = this.dataSource.getRepository(AuditLog).create({
       user: input.userId ? { id: input.userId } : null,

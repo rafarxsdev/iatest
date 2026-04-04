@@ -13,6 +13,7 @@ export interface LoginSuccessUser {
   email: string;
   fullName: string;
   role: string;
+  permissions: string[];
 }
 
 export interface LoginResult {
@@ -114,13 +115,20 @@ export class AuthService {
     });
 
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        role: user.role.name,
-      },
+      user: this.mapLoginUser(user),
       token,
+    };
+  }
+
+  private mapLoginUser(user: User): LoginSuccessUser {
+    const permissions =
+      user.role.rolePermissions?.map((rp) => rp.permission.code).filter((c): c is string => typeof c === 'string') ?? [];
+    return {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role.name,
+      permissions,
     };
   }
 
@@ -235,12 +243,7 @@ export class AuthService {
     if (!user) {
       throw new AppError('Usuario no encontrado', 404);
     }
-    return {
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
-      role: user.role.name,
-    };
+    return this.mapLoginUser(user);
   }
 
   async logout(jti: string, userId: string, ipAddress: string | null, userAgent: string | null): Promise<void> {
