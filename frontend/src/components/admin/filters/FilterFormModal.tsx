@@ -106,7 +106,7 @@ export default function FilterFormModal({ filter, filterTypes, allFilters, onSav
       >
         <div className="sticky top-0 flex items-start justify-between gap-4 p-6 pb-4 bg-surface-container-lowest rounded-t-2xl">
           <h2 id="filter-form-title" className="text-xl font-bold font-headline text-on-surface">
-            {filter ? 'Editar Filtro' : 'Nuevo Filtro'}
+            {filter ? 'Editar Filtro' : 'Nueva Categoría'}
           </h2>
           <button
             type="button"
@@ -179,7 +179,7 @@ export default function FilterFormModal({ filter, filterTypes, allFilters, onSav
 
           <div>
             <label className="block text-sm font-semibold text-on-surface mb-2" htmlFor="filter-parent">
-              Filtro padre (opcional)
+              Categoría padre (opcional)
             </label>
             <select
               id="filter-parent"
@@ -197,7 +197,7 @@ export default function FilterFormModal({ filter, filterTypes, allFilters, onSav
                 </option>
               ))}
             </select>
-            <p className="text-xs text-outline mt-2">Úsalo para crear filtros dependientes jerárquicamente</p>
+            <p className="text-xs text-outline mt-2">Úsalo para crear categorías dependientes jerárquicamente</p>
           </div>
 
           <div>
@@ -217,8 +217,8 @@ export default function FilterFormModal({ filter, filterTypes, allFilters, onSav
 
           <div className="flex items-center justify-between gap-4 rounded-xl bg-surface-container-low/50 p-4">
             <div>
-              <p className="text-sm font-semibold text-on-surface">Filtro activo</p>
-              <p className="text-xs text-outline mt-0.5">Los filtros inactivos no aparecen en el dashboard</p>
+              <p className="text-sm font-semibold text-on-surface">Categoría activa</p>
+              <p className="text-xs text-outline mt-0.5">Las categorías inactivas no aparecen en el dashboard</p>
             </div>
             <button
               type="button"

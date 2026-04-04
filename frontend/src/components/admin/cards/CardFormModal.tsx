@@ -49,7 +49,7 @@ export function CardFormModal({ card, filters, widgetTypes, onSave, onClose }: C
       next.title = 'Mínimo 3 caracteres';
     }
     if (!formData.filterId) {
-      next.filterId = 'Selecciona un filtro';
+      next.filterId = 'Selecciona una categoría';
     }
     if (!formData.widgetTypeId) {
       next.widgetTypeId = 'Selecciona un tipo de widget';
@@ -126,7 +126,7 @@ export function CardFormModal({ card, filters, widgetTypes, onSave, onClose }: C
 
           <div>
             <label className="block text-sm font-semibold text-on-surface mb-2" htmlFor="card-filter">
-              Filtro
+              Categoría
             </label>
             <select
               id="card-filter"
@@ -199,9 +199,7 @@ export function CardFormModal({ card, filters, widgetTypes, onSave, onClose }: C
                   value={formData.htmlContent}
                   onChange={(e) => setFormData((f) => ({ ...f, htmlContent: e.target.value }))}
                 />
-                <p className="text-xs text-outline mt-2">
-                  Ingresa el HTML del widget. Se sanitizará automáticamente al guardar.
-                </p>
+                <p className="text-xs text-outline mt-2">Ingresa el HTML del widget.</p>
               </>
             ) : (
               <>
