@@ -1,4 +1,3 @@
-import sanitizeHtml from 'sanitize-html';
 import type { AuthenticatedRequest } from '@common/types/request.type';
 import { AppError } from '@common/errors/app-error';
 import { AuthRepository } from '@modules/auth/auth.repository';
@@ -20,14 +19,10 @@ export interface AdminCardListItem {
   updatedAt: string;
 }
 
-const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
-  allowedTags: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div', 'span', 'ul', 'ol', 'li', 'a', 'img', 'b', 'strong', 'i', 'em', 'br'],
-  allowedAttributes: {
-    a: ['href'],
-    img: ['src', 'alt'],
-  },
-};
-
+/**
+ * El HTML de la card lo define un administrador (widgets embebidos, scripts, etc.).
+ * No aplicar sanitize-html al guardar: una política restrictiva elimina <script> y atributos como id en <div>.
+ */
 export class AdminCardsService {
   constructor(
     private readonly adminCardsRepository: AdminCardsRepository,
@@ -108,7 +103,7 @@ export class AdminCardsService {
       throw new AppError('Tipo de widget no encontrado o inactivo', 404);
     }
 
-    const htmlContent = sanitizeHtml(dto.htmlContent, SANITIZE_OPTIONS);
+    const htmlContent = dto.htmlContent.trim();
     const widgetConfiguration = dto.widgetConfiguration ?? {};
 
     const card = await this.adminCardsRepository.create({
@@ -178,7 +173,7 @@ export class AdminCardsService {
 
     let htmlContent: string | undefined;
     if (dto.htmlContent !== undefined) {
-      htmlContent = sanitizeHtml(dto.htmlContent, SANITIZE_OPTIONS);
+      htmlContent = dto.htmlContent.trim();
     }
 
     const updated = await this.adminCardsRepository.update(id, {
@@ -199,7 +194,7 @@ export class AdminCardsService {
       throw new AppError('Card no encontrada', 404);
     }
 
-    await this.audit(req, 'ADMIN_CARD_UPDATED', id, { ...dto, htmlContent: htmlContent !== undefined ? '[sanitized]' : undefined }, ipAddress, userAgent);
+    await this.audit(req, 'ADMIN_CARD_UPDATED', id, { ...dto, htmlContent: htmlContent !== undefined ? '[actualizado]' : undefined }, ipAddress, userAgent);
 
     return this.mapCardToListItem(full);
   }

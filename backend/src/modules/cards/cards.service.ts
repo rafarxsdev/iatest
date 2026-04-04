@@ -1,4 +1,3 @@
-import sanitizeHtml from 'sanitize-html';
 import type { AuthenticatedRequest } from '@common/types/request.type';
 import { AppError } from '@common/errors/app-error';
 import { ParameterService } from '@modules/config';
@@ -6,14 +5,7 @@ import { AuthRepository } from '@modules/auth/auth.repository';
 import { InteractionsService } from '@modules/interactions/interactions.service';
 import { CardsRepository } from './cards.repository';
 
-const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
-  allowedTags: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div', 'span', 'ul', 'ol', 'li', 'a', 'img', 'b', 'strong', 'i', 'em', 'br'],
-  allowedAttributes: {
-    a: ['href'],
-    img: ['src', 'alt'],
-  },
-};
-
+/** html_content lo define el admin; incluye embeds con <script> — se devuelve tal cual desde BD. */
 export interface CardResponseDto {
   id: string;
   title: string;
@@ -71,7 +63,7 @@ export class CardsService {
       data.push({
         id: card.id,
         title: card.title,
-        htmlContent: sanitizeHtml(card.htmlContent, SANITIZE_OPTIONS),
+        htmlContent: card.htmlContent,
         widgetType: {
           code: card.widgetType.code,
           label: card.widgetType.label,
