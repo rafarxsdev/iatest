@@ -1,5 +1,5 @@
 import type { AdminCard, Card, CardFormData } from '@types/card';
-import type { Filter, WidgetTypeOption } from '@types/filter';
+import type { AdminFilter, Filter, FilterFormData, FilterType, WidgetTypeOption } from '@types/filter';
 import type { InteractionStatus } from '@types/interaction';
 import type { User } from '@types/user';
 
@@ -313,6 +313,95 @@ export async function restoreCard(id: string): Promise<void> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ deletedAt: null }),
   });
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+}
+
+export async function getAdminFilters(
+  params: { page?: number; limit?: number; search?: string },
+  cookieHeader?: string,
+): Promise<{ data: AdminFilter[]; meta: { total: number; page: number; limit: number } }> {
+  const q = new URLSearchParams();
+  if (params.page !== undefined) {
+    q.set('page', String(params.page));
+  }
+  if (params.limit !== undefined) {
+    q.set('limit', String(params.limit));
+  }
+  if (params.search !== undefined && params.search.length > 0) {
+    q.set('search', params.search);
+  }
+  const qs = q.toString();
+  const path = qs ? `/api/admin/filters?${qs}` : '/api/admin/filters';
+  const r = await apiFetch<AdminFilter[]>(path, { method: 'GET' }, cookieHeader);
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  if (!r.meta) {
+    throw new Error('Respuesta de filtros admin sin meta');
+  }
+  return { data: r.data, meta: r.meta };
+}
+
+export async function getAdminFilterById(id: string, cookieHeader?: string): Promise<AdminFilter> {
+  const r = await apiFetch<AdminFilter>(`/api/admin/filters/${id}`, { method: 'GET' }, cookieHeader);
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  return r.data;
+}
+
+export async function getFilterTypes(cookieHeader?: string): Promise<FilterType[]> {
+  const r = await apiFetch<FilterType[]>('/api/admin/filter-types', { method: 'GET' }, cookieHeader);
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  return r.data;
+}
+
+export async function createFilter(data: FilterFormData): Promise<AdminFilter> {
+  const body = {
+    label: data.label,
+    value: data.value,
+    filterTypeId: data.filterTypeId,
+    parentFilterId: data.parentFilterId ?? undefined,
+    configuration: data.configuration,
+    sortOrder: data.sortOrder,
+    isActive: data.isActive,
+  };
+  const r = await apiFetch<AdminFilter>('/api/admin/filters', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  return r.data;
+}
+
+export async function updateFilter(id: string, data: Partial<FilterFormData>): Promise<AdminFilter> {
+  const r = await apiFetch<AdminFilter>(`/api/admin/filters/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  return r.data;
+}
+
+export async function deactivateFilter(id: string): Promise<void> {
+  const r = await apiFetch<unknown>(`/api/admin/filters/${id}`, { method: 'DELETE' });
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+}
+
+export async function restoreFilter(id: string): Promise<void> {
+  const r = await apiFetch<unknown>(`/api/admin/filters/${id}/restore`, { method: 'PATCH' });
   if (!r.success) {
     throw new Error(r.message);
   }
