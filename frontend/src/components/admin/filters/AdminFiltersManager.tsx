@@ -144,7 +144,7 @@ export default function AdminFiltersManager({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold font-headline text-on-surface mb-6">Gestión de Filtros</h1>
+      <h1 className="text-2xl font-bold font-headline text-on-surface mb-6">Gestión de Categorías</h1>
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-md">
@@ -169,7 +169,7 @@ export default function AdminFiltersManager({
           }}
         >
           <span className="material-symbols-outlined text-xl">add</span>
-          Nuevo Filtro
+          Nueva categoría
         </button>
       </div>
 
