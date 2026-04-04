@@ -167,6 +167,7 @@ INSERT INTO logs.action_types (code, module, description) VALUES
   ('ADMIN_CARD_CREATED',     'admin',     'Nueva card creada'),
   ('ADMIN_CARD_UPDATED',     'admin',     'Card modificada'),
   ('ADMIN_CARD_DELETED',     'admin',     'Card eliminada (soft delete)'),
+  ('ADMIN_CARDS_LISTED',     'admin',     'Listado de cards consultado en administración'),
   -- Config
   ('CONFIG_PARAMETER_UPDATED','config',   'Parámetro del sistema modificado'),
   ('CONFIG_POLICY_UPDATED',  'config',    'Política de interacción modificada'),
