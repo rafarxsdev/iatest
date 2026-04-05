@@ -1,7 +1,47 @@
 .root {
   display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.statsColumn {
+  flex: 1 1 14rem;
+  min-width: 0;
+  display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.widgetColumn {
+  flex: 0 1 auto;
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-start;
+  max-width: min(100%, 28rem);
+}
+
+@media (max-width: 639px) {
+  .widgetColumn {
+    margin-left: 0;
+    align-items: stretch;
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+.widgetColumn .shell {
+  width: fit-content;
+  max-width: 100%;
+}
+
+@media (max-width: 639px) {
+  .widgetColumn .shell {
+    width: 100%;
+  }
 }
 
 .metrics {

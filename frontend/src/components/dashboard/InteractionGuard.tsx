@@ -66,29 +66,33 @@ export default function InteractionGuard({ cardId, initialStatus, children }: In
 
   return (
     <div className={styles.root}>
-      <div className={styles.metrics}>
-        <span className={styles.label}>
-          {status.used} de {status.limit} usos utilizados
-        </span>
-        {isProcessing ? <span className={styles.spinner} aria-hidden /> : null}
+      <div className={styles.statsColumn}>
+        <div className={styles.metrics}>
+          <span className={styles.label}>
+            {status.used} de {status.limit} usos utilizados
+          </span>
+          {isProcessing ? <span className={styles.spinner} aria-hidden /> : null}
+        </div>
+        <div className={styles.track} aria-hidden>
+          <div
+            className={`${styles.fill} ${fillClass}`}
+            style={{ width: `${fillWidthPercent(status.used, status.limit)}%` }}
+          />
+        </div>
       </div>
-      <div className={styles.track} aria-hidden>
+      <div className={styles.widgetColumn}>
         <div
-          className={`${styles.fill} ${fillClass}`}
-          style={{ width: `${fillWidthPercent(status.used, status.limit)}%` }}
-        />
-      </div>
-      <div
-        className={`${styles.shell} ${isProcessing ? styles.shellProcessing : ''}`}
-        onClickCapture={onContainerClick}
-        aria-busy={isProcessing}
-      >
-        <div className={`${styles.inner} ${status.isBlocked ? styles.innerBlocked : ''}`}>{children}</div>
-        {status.isBlocked ? (
-          <div className={styles.overlay} role="presentation">
-            <p className={styles.overlayText}>Has alcanzado el límite de usos para este contenido</p>
-          </div>
-        ) : null}
+          className={`${styles.shell} ${isProcessing ? styles.shellProcessing : ''}`}
+          onClickCapture={onContainerClick}
+          aria-busy={isProcessing}
+        >
+          <div className={`${styles.inner} ${status.isBlocked ? styles.innerBlocked : ''}`}>{children}</div>
+          {status.isBlocked ? (
+            <div className={styles.overlay} role="presentation">
+              <p className={styles.overlayText}>Has alcanzado el límite de usos para este contenido</p>
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );
