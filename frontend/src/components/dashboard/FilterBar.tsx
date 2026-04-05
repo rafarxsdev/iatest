@@ -46,7 +46,7 @@ export default function FilterBar({
         </div>
         <input
           className="w-full h-12 pl-12 pr-4 bg-surface-container-low border-none rounded-xl focus:ring-2 focus:ring-primary/30 text-on-surface placeholder:text-outline transition-all"
-          placeholder="Search resources..."
+          placeholder="buscar demos de agentes ia"
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
@@ -84,7 +84,7 @@ export default function FilterBar({
           </select>
         </div>
         <span className="text-xs font-bold uppercase tracking-widest text-outline shrink-0 sm:ml-2">
-          {total} Results
+          {total} Resultados
         </span>
       </div>
     </div>
