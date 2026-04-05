@@ -35,6 +35,10 @@ import { createRolesRouter } from './roles/roles.router';
 import { RolesRepository } from './roles/roles.repository';
 import { RolesService } from './roles/roles.service';
 import { RolesController } from './roles/roles.controller';
+import { createAdminInteractionsRouter } from './interactions/admin-interactions.router';
+import { AdminInteractionsRepository } from './interactions/admin-interactions.repository';
+import { AdminInteractionsService } from './interactions/admin-interactions.service';
+import { AdminInteractionsController } from './interactions/admin-interactions.controller';
 
 const authRepository = new AuthRepository(AppDataSource);
 const parameterRepository = new ParameterRepository(AppDataSource);
@@ -72,6 +76,10 @@ const rolesRepository = new RolesRepository(AppDataSource);
 const rolesService = new RolesService(rolesRepository);
 const rolesController = new RolesController(rolesService);
 
+const adminInteractionsRepository = new AdminInteractionsRepository(AppDataSource);
+const adminInteractionsService = new AdminInteractionsService(adminInteractionsRepository, authRepository);
+const adminInteractionsController = new AdminInteractionsController(adminInteractionsService);
+
 export const adminRouter = Router();
 
 adminRouter.use(jwtGuard);
@@ -83,3 +91,4 @@ adminRouter.use('/parameters', createParametersRouter(parametersController));
 adminRouter.use('/widget-types', createAdminWidgetTypesRouter(adminWidgetTypesController));
 adminRouter.use('/filter-types', createAdminFilterTypesRouter(adminFilterTypesController));
 adminRouter.use('/filters', createAdminFiltersRouter(adminFiltersController));
+adminRouter.use('/interactions', createAdminInteractionsRouter(adminInteractionsController));
