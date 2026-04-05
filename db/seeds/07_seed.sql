@@ -1,6 +1,7 @@
 -- =============================================================================
 -- 07_seed.sql
--- Datos semilla: catálogos, roles, permisos y parámetros base del sistema
+-- Datos semilla: catálogos, roles, permisos, usuario admin inicial y parámetros
+-- logs.action_types: ver migración 05_logs.sql (catálogo en esquema base)
 -- =============================================================================
 
 BEGIN;
@@ -84,6 +85,34 @@ WHERE code IN (
 );
 
 -- =============================================================================
+-- security.users — administrador inicial (solo entornos de desarrollo / primera instalación)
+-- Contraseña por defecto: ChangeMe123! — cambiar en producción
+-- Hash bcrypt cost 12, generado con el mismo criterio que BCRYPT_ROUNDS del backend
+-- =============================================================================
+INSERT INTO security.users (
+  id,
+  email,
+  password_hash,
+  full_name,
+  role_id,
+  is_active
+) VALUES (
+  '20000000-0000-0000-0000-000000000001',
+  'admin@localhost',
+  '$2b$12$sljNmbWZG1qzAono9A7Lre3EY7l9/WgjUHFDb6TcepzQpVZAVlA1.',
+  'Administrador',
+  '00000000-0000-0000-0000-000000000001',
+  TRUE
+);
+
+INSERT INTO security.user_security_status (user_id, failed_login_attempts, updated_at)
+VALUES (
+  '20000000-0000-0000-0000-000000000001',
+  0,
+  NOW()
+);
+
+-- =============================================================================
 -- config.parameter_categories
 -- =============================================================================
 INSERT INTO config.parameter_categories (id, code, description) VALUES
@@ -137,42 +166,5 @@ INSERT INTO interactions.reset_policies (code, description) VALUES
   ('weekly',  'El contador se reinicia cada lunes a medianoche'),
   ('monthly', 'El contador se reinicia el primer día de cada mes'),
   ('manual',  'El contador solo se reinicia manualmente por un administrador');
-
--- =============================================================================
--- logs.action_types
--- =============================================================================
-INSERT INTO logs.action_types (code, module, description) VALUES
-  -- Auth
-  ('AUTH_LOGIN',             'auth',      'Inicio de sesión exitoso'),
-  ('AUTH_LOGOUT',            'auth',      'Cierre de sesión'),
-  ('AUTH_LOGIN_FAILED',      'auth',      'Intento de login fallido por credenciales incorrectas'),
-  ('AUTH_ACCOUNT_BLOCKED',   'auth',      'Cuenta bloqueada por superar el límite de intentos fallidos'),
-  ('AUTH_TOKEN_REVOKED',     'auth',      'Token JWT revocado manualmente'),
-  ('AUTH_PROFILE_UPDATED',   'auth',      'Perfil de usuario actualizado (nombre o contraseña)'),
-  -- Dashboard
-  ('DASHBOARD_VIEW',         'dashboard', 'Usuario accedió al dashboard'),
-  ('FILTER_APPLIED',         'dashboard', 'Usuario aplicó un filtro en el dashboard'),
-  -- Cards
-  ('CARD_VIEW',              'cards',     'Card visualizada por el usuario'),
-  ('WIDGET_INTERACTION',     'cards',     'Usuario interactuó exitosamente con un widget'),
-  ('WIDGET_BLOCKED',         'cards',     'Interacción bloqueada por haber alcanzado el límite'),
-  ('WIDGET_RESET',           'cards',     'Contador de interacciones reiniciado para un usuario/card'),
-  -- Admin
-  ('ADMIN_USER_CREATED',     'admin',     'Nuevo usuario creado'),
-  ('ADMIN_USER_UPDATED',     'admin',     'Usuario modificado'),
-  ('ADMIN_USER_DEACTIVATED', 'admin',     'Usuario desactivado'),
-  ('ADMIN_CARD_CREATED',     'admin',     'Nueva card creada'),
-  ('ADMIN_CARD_UPDATED',     'admin',     'Card modificada'),
-  ('ADMIN_CARD_DELETED',     'admin',     'Card eliminada (soft delete)'),
-  ('ADMIN_CARDS_LISTED',     'admin',     'Listado de cards consultado en administración'),
-  ('ADMIN_FILTER_CREATED',   'admin',     'Filtro del dashboard creado'),
-  ('ADMIN_FILTER_DEACTIVATED','admin',    'Filtro del dashboard desactivado'),
-  ('ADMIN_FILTER_RESTORED',  'admin',     'Filtro del dashboard reactivado'),
-  -- Config
-  ('CONFIG_PARAMETER_UPDATED','config',   'Parámetro del sistema modificado'),
-  ('CONFIG_POLICY_UPDATED',  'config',    'Política de interacción modificada'),
-  ('ADMIN_USERS_LISTED',     'admin',     'Listado de usuarios consultado en administración'),
-  ('CONFIG_POLICIES_LISTED', 'config',    'Políticas de interacción listadas para una card'),
-  ('ADMIN_PARAMETERS_LISTED','admin',     'Parámetros del sistema listados');
 
 COMMIT;
