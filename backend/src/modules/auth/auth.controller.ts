@@ -7,6 +7,7 @@ import type { AuthenticatedRequest } from '@common/types/request.type';
 import { getEnvConfig } from '@config/env.config';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 function clientIp(req: Request): string | null {
   const forwarded = req.headers['x-forwarded-for'];
@@ -57,6 +58,24 @@ export class AuthController {
   me = async (req: Request, res: Response): Promise<void> => {
     const r = req as AuthenticatedRequest;
     const user = await this.authService.getMe(r.user.sub);
+    res.status(200).json({ success: true, data: user });
+  };
+
+  updateProfile = async (req: Request, res: Response): Promise<void> => {
+    const r = req as AuthenticatedRequest;
+    const dto = plainToInstance(UpdateProfileDto, req.body);
+    const errors = await validate(dto);
+    if (errors.length > 0) {
+      const msg = errors.map((e) => Object.values(e.constraints ?? {}).join(', ')).join('; ');
+      throw new AppError(msg || 'Datos inválidos', 400);
+    }
+    const user = await this.authService.updateProfile(
+      r.user.sub,
+      dto,
+      r.user.jti,
+      clientIp(req),
+      clientUserAgent(req),
+    );
     res.status(200).json({ success: true, data: user });
   };
 

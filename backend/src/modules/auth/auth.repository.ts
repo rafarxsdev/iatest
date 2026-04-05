@@ -59,7 +59,7 @@ export class AuthRepository {
     });
   }
 
-  /** Usuario activo para GET /api/auth/me (sin password_hash). */
+  /** Usuario activo para GET /api/auth/me (sin exponer password_hash en la respuesta). */
   async findActiveUserById(userId: string): Promise<User | null> {
     return this.dataSource.getRepository(User).findOne({
       where: { id: userId, isActive: true, deletedAt: IsNull() },
@@ -70,6 +70,36 @@ export class AuthRepository {
           },
         },
       },
+    });
+  }
+
+  /** Usuario con rol y estado de seguridad (p. ej. cambio de contraseña en perfil). */
+  async findActiveUserForProfile(userId: string): Promise<User | null> {
+    return this.dataSource.getRepository(User).findOne({
+      where: { id: userId, isActive: true, deletedAt: IsNull() },
+      relations: { role: true, userSecurityStatus: true },
+    });
+  }
+
+  async updateUserFullName(userId: string, fullName: string): Promise<void> {
+    await this.dataSource.getRepository(User).update(
+      { id: userId },
+      { fullName, updatedAt: new Date() },
+    );
+  }
+
+  async updateUserPasswordAndChangedAt(userId: string, passwordHash: string): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(User).update({ id: userId }, { passwordHash, updatedAt: new Date() });
+      const uss = await manager.getRepository(UserSecurityStatus).findOne({
+        where: { user: { id: userId } },
+      });
+      if (uss) {
+        const now = new Date();
+        uss.passwordChangedAt = now;
+        uss.updatedAt = now;
+        await manager.getRepository(UserSecurityStatus).save(uss);
+      }
     });
   }
 
@@ -88,6 +118,18 @@ export class AuthRepository {
 
   async revokeSession(jti: string): Promise<void> {
     await this.dataSource.getRepository(Session).update({ tokenJti: jti }, { revokedAt: new Date() });
+  }
+
+  /** Revoca todas las sesiones activas de un usuario (p. ej. tras baja administrativa). */
+  async revokeAllSessionsForUser(userId: string): Promise<void> {
+    const now = new Date();
+    await this.dataSource
+      .createQueryBuilder()
+      .update(Session)
+      .set({ revokedAt: now })
+      .where('user_id = :userId', { userId })
+      .andWhere('revoked_at IS NULL')
+      .execute();
   }
 
   async getActiveSession(jti: string): Promise<Session | null> {

@@ -19,4 +19,5 @@ export const authRouter = Router();
 
 authRouter.post('/login', asyncHandler(authController.login));
 authRouter.get('/me', jwtGuard, asyncHandler(authController.me));
+authRouter.patch('/profile', jwtGuard, asyncHandler(authController.updateProfile));
 authRouter.post('/logout', jwtGuard, asyncHandler(authController.logout));

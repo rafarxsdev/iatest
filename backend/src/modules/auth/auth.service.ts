@@ -7,6 +7,7 @@ import type { User } from '@database/entities/user.entity';
 import { ParameterService } from '../config';
 import { AuthRepository } from './auth.repository';
 import type { LoginDto } from './dto/login.dto';
+import type { UpdateProfileDto } from './dto/update-profile.dto';
 
 export interface LoginSuccessUser {
   id: string;
@@ -14,6 +15,16 @@ export interface LoginSuccessUser {
   fullName: string;
   role: string;
   permissions: string[];
+}
+
+/** Respuesta de GET /api/auth/me y PATCH /api/auth/profile (sin password_hash). */
+export interface MeUser {
+  id: string;
+  email: string;
+  fullName: string;
+  role: { id: string; name: string };
+  lastLoginAt: string | null;
+  createdAt: string;
 }
 
 export interface LoginResult {
@@ -238,12 +249,87 @@ export class AuthService {
     }
   }
 
-  async getMe(userId: string): Promise<LoginSuccessUser> {
+  private mapMeUser(user: User): MeUser {
+    return {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      role: { id: user.role.id, name: user.role.name },
+      lastLoginAt: user.lastLoginAt ? user.lastLoginAt.toISOString() : null,
+      createdAt: user.createdAt.toISOString(),
+    };
+  }
+
+  async getMe(userId: string): Promise<MeUser> {
     const user = await this.authRepository.findActiveUserById(userId);
     if (!user) {
       throw new AppError('Usuario no encontrado', 404);
     }
-    return this.mapLoginUser(user);
+    return this.mapMeUser(user);
+  }
+
+  async updateProfile(
+    userId: string,
+    dto: UpdateProfileDto,
+    jti: string,
+    ipAddress: string | null,
+    userAgent: string | null,
+  ): Promise<MeUser> {
+    const hasName = dto.fullName !== undefined && dto.fullName.trim().length > 0;
+    const hasPasswordChange = dto.newPassword !== undefined && dto.newPassword.length > 0;
+
+    if (!hasName && !hasPasswordChange) {
+      throw new AppError('Debes enviar nombre o cambio de contraseña', 400);
+    }
+
+    if (hasPasswordChange) {
+      if (!dto.currentPassword || dto.currentPassword.length === 0) {
+        throw new AppError('Si indicas nueva contraseña, debes enviar la contraseña actual', 400);
+      }
+    }
+
+    const user = await this.authRepository.findActiveUserForProfile(userId);
+    if (!user || !user.userSecurityStatus) {
+      throw new AppError('Usuario no encontrado', 404);
+    }
+
+    if (hasPasswordChange) {
+      const ok = await bcrypt.compare(dto.currentPassword!, user.passwordHash);
+      if (!ok) {
+        throw new AppError('Contraseña actual incorrecta', 400);
+      }
+      const passwordHash = await bcrypt.hash(dto.newPassword!, this.env.bcryptRounds);
+      await this.authRepository.updateUserPasswordAndChangedAt(userId, passwordHash);
+    }
+
+    if (hasName) {
+      await this.authRepository.updateUserFullName(userId, dto.fullName!.trim());
+    }
+
+    const updated = await this.authRepository.findActiveUserForProfile(userId);
+    if (!updated) {
+      throw new AppError('Usuario no encontrado', 404);
+    }
+
+    const session = await this.authRepository.getActiveSession(jti);
+    await this.authRepository.createAuditLog({
+      userId,
+      sessionId: session?.id ?? null,
+      actionTypeCode: 'AUTH_PROFILE_UPDATED',
+      entityType: 'user',
+      entityId: userId,
+      payload: {
+        changedPassword: hasPasswordChange,
+        changedName: hasName,
+      },
+      ipAddress,
+      userAgent,
+      status: 'success',
+      errorMessage: null,
+      durationMs: null,
+    });
+
+    return this.mapMeUser(updated);
   }
 
   async logout(jti: string, userId: string, ipAddress: string | null, userAgent: string | null): Promise<void> {
