@@ -9,14 +9,20 @@ db/
 │   ├── 00_init.sql                ← Extensiones y esquemas
 │   ├── 01_security.sql            ← Usuarios, roles, permisos, sesiones
 │   ├── 02_config.sql              ← Parámetros del sistema (jerarquía 3 niveles)
-│   ├── 03_content.sql             ← Filtros, widgets y cards
+│   ├── 03_content.sql             ← Filtros, widgets y cards (incl. icon_name)
 │   ├── 04_interactions.sql        ← Políticas y contadores de interacción
-│   └── 05_logs.sql                ← Auditoría, auth logs, interaction logs
+│   ├── 05_logs.sql                ← Auditoría, auth logs, interaction logs + catálogo action_types
+│   ├── 09_operator_cards_filters_permissions.sql  ← Parche datos: permisos operator (idempotente)
+│   └── 10_card_icon_name.sql      ← Parche esquema legacy: columna icon_name (idempotente)
 ├── indexes/
-│   └── 06_indexes.sql             ← Todos los índices de rendimiento
+│   └── 06_indexes.sql             ← Índices de rendimiento
 └── seeds/
-    └── 07_seed.sql                ← Catálogos, roles, parámetros base
+    └── 07_seed.sql                ← Roles, permisos, parámetros, catálogos, usuario admin inicial
 ```
+
+`install.sh` ejecuta en orden: **00 → 05**, **06_indexes**, **10** (no-op si la columna ya existe), y si usas **`--seed`**: **07_seed** y **09** (no-op si los permisos del operator ya están).
+
+Los catálogos `logs.action_types` se cargan en **05_logs.sql** para que una instalación **sin** `--seed` tenga igualmente los tipos de acción necesarios para auditoría.
 
 ---
 
@@ -42,10 +48,10 @@ DB_PASSWORD  # default: (vacío)
 ### Comandos
 
 ```bash
-# Instalación base (sin datos semilla)
+# Esquema + índices + parche 10 (sin datos de negocio ni usuario)
 ./install.sh
 
-# Instalación con datos semilla (recomendado para desarrollo)
+# Recomendado para desarrollo: semilla con roles, permisos, admin inicial y catálogos
 ./install.sh --seed
 
 # Reinstalación completa desde cero (destructivo — pide confirmación)
@@ -54,6 +60,16 @@ DB_PASSWORD  # default: (vacío)
 # Con variables de entorno personalizadas
 DB_HOST=db.servidor.com DB_NAME=produccion_db DB_USER=app_user DB_PASSWORD=secret ./install.sh --seed
 ```
+
+### Usuario administrador por defecto (solo con `--seed`)
+
+| Campo        | Valor                    |
+|-------------|---------------------------|
+| Email       | `admin@localhost`       |
+| Contraseña  | `ChangeMe123!`          |
+| Rol         | `admin`                 |
+
+Cambia la contraseña inmediatamente en entornos expuestos.
 
 ---
 

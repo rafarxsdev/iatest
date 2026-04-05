@@ -1,3 +1,5 @@
+-- Idempotente: instalaciones nuevas ya definen icon_name en 03_content.sql;
+-- se mantiene para bases creadas con esquemas anteriores.
 -- Ícono Material Symbols (nombre de glifo) por card
 ALTER TABLE content.cards
   ADD COLUMN IF NOT EXISTS icon_name VARCHAR(100) NULL;

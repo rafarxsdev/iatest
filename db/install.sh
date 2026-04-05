@@ -183,10 +183,15 @@ run_sql "$SCRIPT_DIR/indexes/06_indexes.sql"       "06 · Índices de rendimient
 log "INFO" "--- Índices creados ---"
 echo ""
 
-# Seed opcional
+# Compatibilidad: columnas añadidas tras el esquema base (no-op si ya existen)
+run_sql "$SCRIPT_DIR/migrations/10_card_icon_name.sql" "10 · Columna icon_name en cards (legacy / idempotente)"
+
+# Seed opcional (roles, permisos, admin inicial, catálogos de contenido)
 if [ "$INCLUDE_SEED" = true ]; then
   log "INFO" "--- Cargando datos semilla ---"
-  run_sql "$SCRIPT_DIR/seeds/07_seed.sql"          "07 · Datos semilla (catálogos y parámetros)"
+  run_sql "$SCRIPT_DIR/seeds/07_seed.sql"          "07 · Datos semilla (catálogos, roles, usuario admin)"
+  # Parche datos: permisos operator en BDs antiguas (idempotente; seed ya los define en instalaciones nuevas)
+  run_sql "$SCRIPT_DIR/migrations/09_operator_cards_filters_permissions.sql" "09 · Permisos operator cards/filters (idempotente)"
   log "INFO" "--- Datos semilla cargados ---"
   echo ""
 fi
