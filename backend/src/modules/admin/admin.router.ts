@@ -31,6 +31,10 @@ import { createAdminFiltersRouter } from './filters/filters.router';
 import { AdminFiltersRepository } from './filters/filters.repository';
 import { AdminFiltersService } from './filters/filters.service';
 import { AdminFiltersController } from './filters/filters.controller';
+import { createRolesRouter } from './roles/roles.router';
+import { RolesRepository } from './roles/roles.repository';
+import { RolesService } from './roles/roles.service';
+import { RolesController } from './roles/roles.controller';
 
 const authRepository = new AuthRepository(AppDataSource);
 const parameterRepository = new ParameterRepository(AppDataSource);
@@ -64,9 +68,14 @@ const adminFiltersRepository = new AdminFiltersRepository(AppDataSource);
 const adminFiltersService = new AdminFiltersService(adminFiltersRepository, authRepository);
 const adminFiltersController = new AdminFiltersController(adminFiltersService);
 
+const rolesRepository = new RolesRepository(AppDataSource);
+const rolesService = new RolesService(rolesRepository);
+const rolesController = new RolesController(rolesService);
+
 export const adminRouter = Router();
 
 adminRouter.use(jwtGuard);
+adminRouter.use('/roles', createRolesRouter(rolesController));
 adminRouter.use('/users', createUsersRouter(usersController));
 adminRouter.use('/cards', createAdminCardsRouter(adminCardsController));
 adminRouter.use('/policies', createPoliciesRouter(policiesController));

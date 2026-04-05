@@ -1,5 +1,5 @@
-import type { DataSource } from 'typeorm';
-import { IsNull } from 'typeorm';
+import type { DataSource, SelectQueryBuilder } from 'typeorm';
+import { IsNull, Not } from 'typeorm';
 import { User } from '@database/entities/user.entity';
 import { UserSecurityStatus } from '@database/entities/user-security-status.entity';
 import { Role } from '@database/entities/role.entity';
@@ -43,22 +43,76 @@ export class UsersRepository {
     page: number,
     limit: number,
     search: string | undefined,
+    roleId: string | undefined,
+    isActive: boolean | undefined,
   ): Promise<{ users: User[]; total: number }> {
-    const qb = this.dataSource
+    const applyFilters = (qb: SelectQueryBuilder<User>): void => {
+      qb.where('u.deleted_at IS NULL');
+
+      if (search !== undefined && search.trim() !== '') {
+        const term = `%${search.trim()}%`;
+        qb.andWhere('(u.email ILIKE :term OR u.full_name ILIKE :term)', { term });
+      }
+
+      if (roleId !== undefined && roleId !== '') {
+        qb.andWhere('u.role_id = :roleId', { roleId });
+      }
+
+      if (isActive !== undefined) {
+        qb.andWhere('u.is_active = :isActive', { isActive });
+      }
+    };
+
+    const countQb = this.dataSource.getRepository(User).createQueryBuilder('u');
+    applyFilters(countQb);
+    const total = await countQb.getCount();
+
+    const listQb = this.dataSource
       .getRepository(User)
       .createQueryBuilder('u')
       .leftJoinAndSelect('u.role', 'role')
-      .where('u.deleted_at IS NULL');
+      .leftJoinAndSelect('u.userSecurityStatus', 'uss');
+    applyFilters(listQb);
+    listQb.orderBy('u.createdAt', 'DESC').skip((page - 1) * limit).take(limit);
 
-    if (search !== undefined && search.trim() !== '') {
-      const term = `%${search.trim()}%`;
-      qb.andWhere('(u.email ILIKE :term OR u.full_name ILIKE :term)', { term });
-    }
-
-    qb.orderBy('u.created_at', 'DESC').skip((page - 1) * limit).take(limit);
-
-    const [users, total] = await qb.getManyAndCount();
+    const users = await listQb.getMany();
     return { users, total };
+  }
+
+  async findByIdWithRelations(id: string): Promise<User | null> {
+    return this.dataSource.getRepository(User).findOne({
+      where: { id, deletedAt: IsNull() },
+      relations: { role: true, userSecurityStatus: true },
+    });
+  }
+
+  async restore(id: string): Promise<User | null> {
+    const res = await this.dataSource.getRepository(User).update(
+      { id, deletedAt: Not(IsNull()) },
+      { deletedAt: null, updatedAt: new Date() },
+    );
+    if (!res.affected) {
+      return null;
+    }
+    return this.findByIdWithRelations(id);
+  }
+
+  async unlockSecurityForUser(userId: string): Promise<boolean> {
+    const user = await this.findByIdActive(userId);
+    if (!user) {
+      return false;
+    }
+    const repo = this.dataSource.getRepository(UserSecurityStatus);
+    const uss = await repo.findOne({ where: { user: { id: userId } } });
+    if (!uss) {
+      return false;
+    }
+    uss.failedLoginAttempts = 0;
+    uss.loginBlockedUntil = null;
+    uss.lastFailedAttemptAt = null;
+    uss.updatedAt = new Date();
+    await repo.save(uss);
+    return true;
   }
 
   async createWithSecurity(row: CreateUserRow): Promise<User> {

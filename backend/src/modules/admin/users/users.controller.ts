@@ -18,6 +18,22 @@ function clientUserAgent(req: Request): string | null {
   return typeof ua === 'string' ? ua : null;
 }
 
+function parseRoleId(req: Request): string | undefined {
+  const raw = req.query.roleId;
+  return typeof raw === 'string' && raw.length > 0 ? raw : undefined;
+}
+
+function parseIsActive(req: Request): boolean | undefined {
+  const raw = req.query.isActive;
+  if (raw === 'true') {
+    return true;
+  }
+  if (raw === 'false') {
+    return false;
+  }
+  return undefined;
+}
+
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -36,11 +52,31 @@ export class UsersController {
       throw new AppError('limit debe ser un entero entre 1 y 100', 400);
     }
     const searchRaw = req.query.search;
-    const search =
-      typeof searchRaw === 'string' && searchRaw.length > 0 ? searchRaw : undefined;
+    const search = typeof searchRaw === 'string' && searchRaw.length > 0 ? searchRaw : undefined;
+    const roleId = parseRoleId(req);
+    const isActive = parseIsActive(req);
 
-    const result = await this.usersService.list(r, pageParsed, limitParsed, search, clientIp(req), clientUserAgent(req));
+    const result = await this.usersService.list(
+      r,
+      pageParsed,
+      limitParsed,
+      search,
+      roleId,
+      isActive,
+      clientIp(req),
+      clientUserAgent(req),
+    );
     res.status(200).json({ success: true, data: result.data, meta: result.meta });
+  };
+
+  getById = async (req: Request, res: Response): Promise<void> => {
+    const r = req as AuthenticatedRequest;
+    const id = req.params.id;
+    if (!id) {
+      throw new AppError('id requerido', 400);
+    }
+    const data = await this.usersService.getById(r, id);
+    res.status(200).json({ success: true, data });
   };
 
   create = async (req: Request, res: Response): Promise<void> => {
@@ -79,5 +115,25 @@ export class UsersController {
     }
     await this.usersService.remove(r, id, clientIp(req), clientUserAgent(req));
     res.status(200).json({ success: true, data: null });
+  };
+
+  restore = async (req: Request, res: Response): Promise<void> => {
+    const r = req as AuthenticatedRequest;
+    const id = req.params.id;
+    if (!id) {
+      throw new AppError('id requerido', 400);
+    }
+    const data = await this.usersService.restore(r, id, clientIp(req), clientUserAgent(req));
+    res.status(200).json({ success: true, data });
+  };
+
+  unlock = async (req: Request, res: Response): Promise<void> => {
+    const r = req as AuthenticatedRequest;
+    const id = req.params.id;
+    if (!id) {
+      throw new AppError('id requerido', 400);
+    }
+    const data = await this.usersService.unlock(r, id, clientIp(req), clientUserAgent(req));
+    res.status(200).json({ success: true, data });
   };
 }

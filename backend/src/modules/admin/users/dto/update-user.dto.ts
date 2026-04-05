@@ -1,4 +1,5 @@
-import { IsBoolean, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import { UUID_STRING_REGEX } from '@common/validators/uuid-string';
+import { IsBoolean, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -7,7 +8,7 @@ export class UpdateUserDto {
   fullName?: string;
 
   @IsOptional()
-  @IsUUID()
+  @Matches(UUID_STRING_REGEX, { message: 'roleId debe ser un UUID válido' })
   roleId?: string;
 
   @IsOptional()

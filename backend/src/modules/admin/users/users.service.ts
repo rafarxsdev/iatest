@@ -1,12 +1,19 @@
 import bcrypt from 'bcrypt';
 import { AppError } from '@common/errors/app-error';
 import type { AuthenticatedRequest } from '@common/types/request.type';
+import type { User } from '@database/entities/user.entity';
 import { getEnvConfig } from '@config/env.config';
 import { AuthRepository } from '@modules/auth/auth.repository';
 import { ParameterService } from '@modules/config';
 import { UsersRepository } from './users.repository';
 import type { CreateUserDto } from './dto/create-user.dto';
 import type { UpdateUserDto } from './dto/update-user.dto';
+
+export interface AdminUserSecurityStatus {
+  failedLoginAttempts: number;
+  loginBlockedUntil: string | null;
+  passwordChangedAt: string | null;
+}
 
 export interface AdminUserResponse {
   id: string;
@@ -16,6 +23,7 @@ export interface AdminUserResponse {
   isActive: boolean;
   lastLoginAt: string | null;
   createdAt: string;
+  securityStatus: AdminUserSecurityStatus;
 }
 
 export class UsersService {
@@ -24,6 +32,35 @@ export class UsersService {
     private readonly authRepository: AuthRepository,
     private readonly parameterService: ParameterService,
   ) {}
+
+  private mapSecurity(u: User): AdminUserSecurityStatus {
+    const uss = u.userSecurityStatus;
+    if (!uss) {
+      return {
+        failedLoginAttempts: 0,
+        loginBlockedUntil: null,
+        passwordChangedAt: null,
+      };
+    }
+    return {
+      failedLoginAttempts: uss.failedLoginAttempts,
+      loginBlockedUntil: uss.loginBlockedUntil ? uss.loginBlockedUntil.toISOString() : null,
+      passwordChangedAt: uss.passwordChangedAt ? uss.passwordChangedAt.toISOString() : null,
+    };
+  }
+
+  private toAdminUser(u: User): AdminUserResponse {
+    return {
+      id: u.id,
+      email: u.email,
+      fullName: u.fullName,
+      role: { id: u.role.id, name: u.role.name },
+      isActive: u.isActive,
+      lastLoginAt: u.lastLoginAt ? u.lastLoginAt.toISOString() : null,
+      createdAt: u.createdAt.toISOString(),
+      securityStatus: this.mapSecurity(u),
+    };
+  }
 
   private async audit(
     req: AuthenticatedRequest,
@@ -55,23 +92,33 @@ export class UsersService {
     page: number,
     limit: number,
     search: string | undefined,
+    roleId: string | undefined,
+    isActive: boolean | undefined,
     ipAddress: string | null,
     userAgent: string | null,
   ): Promise<{ data: AdminUserResponse[]; meta: { total: number; page: number; limit: number } }> {
-    const { users, total } = await this.usersRepository.findPaginated(page, limit, search);
-    const data: AdminUserResponse[] = users.map((u) => ({
-      id: u.id,
-      email: u.email,
-      fullName: u.fullName,
-      role: { id: u.role.id, name: u.role.name },
-      isActive: u.isActive,
-      lastLoginAt: u.lastLoginAt ? u.lastLoginAt.toISOString() : null,
-      createdAt: u.createdAt.toISOString(),
-    }));
+    const { users, total } = await this.usersRepository.findPaginated(page, limit, search, roleId, isActive);
+    const data = users.map((u) => this.toAdminUser(u));
 
-    await this.audit(req, 'ADMIN_USERS_LISTED', 'user', null, { page, limit, search: search ?? null }, ipAddress, userAgent);
+    await this.audit(
+      req,
+      'ADMIN_USERS_LISTED',
+      'user',
+      null,
+      { page, limit, search: search ?? null, roleId: roleId ?? null, isActive: isActive ?? null },
+      ipAddress,
+      userAgent,
+    );
 
     return { data, meta: { total, page, limit } };
+  }
+
+  async getById(_req: AuthenticatedRequest, id: string): Promise<AdminUserResponse> {
+    const user = await this.usersRepository.findByIdWithRelations(id);
+    if (!user) {
+      throw new AppError('Usuario no encontrado', 404);
+    }
+    return this.toAdminUser(user);
   }
 
   async create(
@@ -117,15 +164,11 @@ export class UsersService {
       userAgent,
     );
 
-    return {
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
-      role: { id: user.role.id, name: user.role.name },
-      isActive: user.isActive,
-      lastLoginAt: user.lastLoginAt ? user.lastLoginAt.toISOString() : null,
-      createdAt: user.createdAt.toISOString(),
-    };
+    const full = await this.usersRepository.findByIdWithRelations(user.id);
+    if (!full) {
+      throw new AppError('Usuario no encontrado', 404);
+    }
+    return this.toAdminUser(full);
   }
 
   async update(
@@ -169,22 +212,24 @@ export class UsersService {
       userAgent,
     );
 
-    return {
-      id: updated.id,
-      email: updated.email,
-      fullName: updated.fullName,
-      role: { id: updated.role.id, name: updated.role.name },
-      isActive: updated.isActive,
-      lastLoginAt: updated.lastLoginAt ? updated.lastLoginAt.toISOString() : null,
-      createdAt: updated.createdAt.toISOString(),
-    };
+    const full = await this.usersRepository.findByIdWithRelations(id);
+    if (!full) {
+      throw new AppError('Usuario no encontrado', 404);
+    }
+    return this.toAdminUser(full);
   }
 
   async remove(req: AuthenticatedRequest, id: string, ipAddress: string | null, userAgent: string | null): Promise<void> {
+    if (id === req.user.sub) {
+      throw new AppError('No puedes eliminar tu propio usuario', 400);
+    }
+
     const user = await this.usersRepository.findByIdActive(id);
     if (!user) {
       throw new AppError('Usuario no encontrado', 404);
     }
+
+    await this.authRepository.revokeAllSessionsForUser(id);
 
     const ok = await this.usersRepository.softDelete(id);
     if (!ok) {
@@ -192,5 +237,41 @@ export class UsersService {
     }
 
     await this.audit(req, 'ADMIN_USER_DEACTIVATED', 'user', id, { email: user.email }, ipAddress, userAgent);
+  }
+
+  async restore(
+    req: AuthenticatedRequest,
+    id: string,
+    ipAddress: string | null,
+    userAgent: string | null,
+  ): Promise<AdminUserResponse> {
+    const restored = await this.usersRepository.restore(id);
+    if (!restored) {
+      throw new AppError('Usuario no encontrado o ya estaba activo', 404);
+    }
+
+    await this.audit(req, 'ADMIN_USER_UPDATED', 'user', id, { action: 'restore' }, ipAddress, userAgent);
+
+    return this.toAdminUser(restored);
+  }
+
+  async unlock(
+    req: AuthenticatedRequest,
+    id: string,
+    ipAddress: string | null,
+    userAgent: string | null,
+  ): Promise<AdminUserResponse> {
+    const ok = await this.usersRepository.unlockSecurityForUser(id);
+    if (!ok) {
+      throw new AppError('Usuario no encontrado', 404);
+    }
+
+    await this.audit(req, 'ADMIN_USER_UPDATED', 'user', id, { action: 'unlock' }, ipAddress, userAgent);
+
+    const full = await this.usersRepository.findByIdWithRelations(id);
+    if (!full) {
+      throw new AppError('Usuario no encontrado', 404);
+    }
+    return this.toAdminUser(full);
   }
 }
