@@ -93,7 +93,7 @@ export default function FilterFormModal({ filter, filterTypes, allFilters, onSav
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/40 backdrop-blur-sm px-4 py-6"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-on-surface/40 backdrop-blur-sm px-4 py-6"
       role="presentation"
       onClick={onClose}
     >
