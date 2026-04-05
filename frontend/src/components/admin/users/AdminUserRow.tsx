@@ -89,7 +89,7 @@ export default function AdminUserRow({
             title="Restaurar usuario"
             onClick={() => onRestore(user)}
           >
-            <span className="material-symbols-outlined">settings_backup_restore</span>
+            <span className="material-symbols-outlined">restore</span>
           </button>
         ) : (
           <>

@@ -5,6 +5,7 @@ import type { User } from '@types/user';
 import { getCards } from '@lib/api';
 import CardGrid from './CardGrid';
 import FilterBar from './FilterBar';
+import { DEFAULT_CARD_SORT_MODE, sortCards, type CardSortMode } from './sort-cards';
 
 export interface DashboardProps {
   filters: Filter[];
@@ -19,6 +20,7 @@ export default function Dashboard({ filters, initialCards, initialTotal, user }:
   const [total, setTotal] = useState(initialTotal);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortMode, setSortMode] = useState<CardSortMode>(DEFAULT_CARD_SORT_MODE);
 
   const handleFilterChange = useCallback(async (id: string | null) => {
     setSelectedFilterId(id);
@@ -46,6 +48,8 @@ export default function Dashboard({ filters, initialCards, initialTotal, user }:
     );
   }, [cards, searchQuery]);
 
+  const sortedCards = useMemo(() => sortCards(filteredCards, sortMode), [filteredCards, sortMode]);
+
   const displayTotal = searchQuery.trim() ? filteredCards.length : total;
 
   return (
@@ -60,9 +64,11 @@ export default function Dashboard({ filters, initialCards, initialTotal, user }:
         onFilterChange={handleFilterChange}
         onSearchChange={setSearchQuery}
         searchQuery={searchQuery}
+        sortMode={sortMode}
+        onSortChange={setSortMode}
         disabled={isLoading}
       />
-      <CardGrid cards={filteredCards} isLoading={isLoading} />
+      <CardGrid cards={sortedCards} isLoading={isLoading} />
     </div>
   );
 }

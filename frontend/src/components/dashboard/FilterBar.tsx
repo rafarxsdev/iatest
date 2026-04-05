@@ -1,4 +1,6 @@
 import type { Filter } from '@types/filter';
+import type { CardSortMode } from './sort-cards';
+import { CARD_SORT_OPTIONS } from './sort-cards';
 
 export interface FilterBarProps {
   filters: Filter[];
@@ -7,6 +9,8 @@ export interface FilterBarProps {
   onFilterChange: (filterId: string | null) => void;
   onSearchChange: (query: string) => void;
   searchQuery: string;
+  sortMode: CardSortMode;
+  onSortChange: (mode: CardSortMode) => void;
   disabled?: boolean;
 }
 
@@ -28,6 +32,8 @@ export default function FilterBar({
   onFilterChange,
   onSearchChange,
   searchQuery,
+  sortMode,
+  onSortChange,
   disabled,
 }: FilterBarProps) {
   const flat = flattenFilters(filters);
@@ -47,31 +53,37 @@ export default function FilterBar({
           disabled={disabled}
         />
       </div>
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="flex flex-nowrap items-center gap-2 min-w-0 overflow-x-auto pb-0.5 sm:pb-0 [scrollbar-width:thin]">
           <select
-            className="flex items-center gap-2 px-4 py-2 bg-surface-container-high rounded-full text-sm font-semibold text-on-surface-variant border-none appearance-none cursor-pointer hover:bg-surface-container-highest transition-all"
+            className="shrink-0 min-w-[16rem] max-w-[26rem] px-4 py-2 bg-surface-container-high rounded-full text-sm font-semibold text-on-surface-variant border-none appearance-none cursor-pointer hover:bg-surface-container-highest transition-all"
             value={selectedFilterId ?? ''}
             onChange={(e) => onFilterChange(e.target.value || null)}
             disabled={disabled}
-            aria-label="Filtrar por tema"
+            aria-label="Filtrar por categoría"
           >
-            <option value="">All Topics</option>
+            <option value="">Todas las categorías</option>
             {flat.map((f) => (
               <option key={f.id} value={f.id}>
                 {f.label}
               </option>
             ))}
           </select>
-          <button
-            type="button"
-            className="flex items-center gap-2 px-4 py-2 bg-surface-container-high rounded-full text-sm font-semibold text-on-surface-variant transition-all hover:bg-surface-container-highest"
+          <select
+            className="shrink-0 min-w-[13rem] max-w-[18rem] pl-4 pr-8 py-2 bg-surface-container-high rounded-full text-sm font-semibold text-on-surface-variant border-none cursor-pointer hover:bg-surface-container-highest transition-all"
+            value={sortMode}
+            onChange={(e) => onSortChange(e.target.value as CardSortMode)}
+            disabled={disabled}
+            aria-label="Ordenar resultados"
           >
-            <span>Newest</span>
-            <span className="material-symbols-outlined text-[18px]">expand_more</span>
-          </button>
+            {CARD_SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
-        <span className="text-xs font-bold uppercase tracking-widest text-outline">
+        <span className="text-xs font-bold uppercase tracking-widest text-outline shrink-0 sm:ml-2">
           {total} Results
         </span>
       </div>

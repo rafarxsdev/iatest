@@ -7,12 +7,11 @@ interface Props {
 }
 
 const { user } = Astro.props;
-const pathname = Astro.url.pathname;
-const pathNorm = pathname.replace(/\/$/, '') || '/';
+const pathNorm = Astro.url.pathname.replace(/\/$/, '') || '/';
 
-function isActiveRoute(href: string): boolean {
-  const h = href.replace(/\/$/, '') || '/';
-  return pathNorm === h;
+function isActive(path: string): boolean {
+  const p = path.replace(/\/$/, '') || '/';
+  return pathNorm === p;
 }
 
 const showAdminNav = user.role === 'admin';
@@ -59,13 +58,13 @@ const initials = user.fullName
   <nav
     class:list={[
       'fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] rounded-3xl z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_8px_24px_rgba(24,28,32,0.06)] flex items-stretch px-2 py-2',
-      showAdminNav ? 'max-w-5xl' : 'max-w-md',
+      showAdminNav ? 'max-w-6xl' : 'max-w-md',
     ]}
   >
     <a
       class:list={[
         'flex flex-1 min-w-0 flex-col items-center justify-center py-2 px-1 transition-transform duration-200',
-        isActiveRoute('/dashboard')
+        isActive('/dashboard')
           ? 'bg-blue-600 dark:bg-blue-500 text-white rounded-2xl scale-105'
           : 'text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400',
       ]}
@@ -79,7 +78,7 @@ const initials = user.fullName
         <a
           class:list={[
             'flex flex-1 min-w-0 flex-col items-center justify-center py-2 px-1 transition-transform duration-200',
-            isActiveRoute('/admin/cards')
+            isActive('/admin/cards')
               ? 'bg-blue-600 dark:bg-blue-500 text-white rounded-2xl scale-105'
               : 'text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400',
           ]}
@@ -91,7 +90,19 @@ const initials = user.fullName
         <a
           class:list={[
             'flex flex-1 min-w-0 flex-col items-center justify-center py-2 px-1 transition-transform duration-200',
-            isActiveRoute('/admin/filters')
+            isActive('/admin/interactions')
+              ? 'bg-blue-600 dark:bg-blue-500 text-white rounded-2xl scale-105'
+              : 'text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400',
+          ]}
+          href="/admin/interactions"
+        >
+          <span class="material-symbols-outlined">manage_history</span>
+          <span class="font-inter text-[11px] font-semibold uppercase tracking-wider text-center">Usos</span>
+        </a>
+        <a
+          class:list={[
+            'flex flex-1 min-w-0 flex-col items-center justify-center py-2 px-1 transition-transform duration-200',
+            isActive('/admin/filters')
               ? 'bg-blue-600 dark:bg-blue-500 text-white rounded-2xl scale-105'
               : 'text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400',
           ]}
@@ -103,7 +114,7 @@ const initials = user.fullName
         <a
           class:list={[
             'flex flex-1 min-w-0 flex-col items-center justify-center py-2 px-1 transition-transform duration-200',
-            isActiveRoute('/admin/users')
+            isActive('/admin/users')
               ? 'bg-blue-600 dark:bg-blue-500 text-white rounded-2xl scale-105'
               : 'text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400',
           ]}
@@ -117,7 +128,7 @@ const initials = user.fullName
     <a
       class:list={[
         'flex flex-1 min-w-0 flex-col items-center justify-center py-2 px-1 transition-transform duration-200',
-        isActiveRoute('/profile')
+        isActive('/profile')
           ? 'bg-blue-600 dark:bg-blue-500 text-white rounded-2xl scale-105'
           : 'text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400',
       ]}
