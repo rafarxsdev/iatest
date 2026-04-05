@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import type { Card } from '@types/card';
 import type { Filter } from '@types/filter';
 import type { User } from '@types/user';
-import { getCards } from '@lib/api';
+import { getCards } from '@lib/api-cards-client';
 import CardGrid from './CardGrid';
 import FilterBar from './FilterBar';
 import { DEFAULT_CARD_SORT_MODE, sortCards, type CardSortMode } from './sort-cards';

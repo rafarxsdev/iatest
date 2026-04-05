@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, type ReactNode } from 'react';
 import type { InteractionStatus } from '@types/interaction';
-import { postInteractionHandled } from '@lib/api';
+import { postInteractionHandled } from '@lib/post-interaction-client';
 import styles from './InteractionGuard.module.css';
 
 export interface InteractionGuardProps {
