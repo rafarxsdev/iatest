@@ -1,8 +1,18 @@
 import type { User } from '@types/user';
 import { getMe } from './api';
 
-/** Solo el rol `admin` puede abrir el panel de administración de cards (UI y SSR). */
+/** Panel de cards en administración: `admin` o `operator` (permisos `admin.cards.*`). */
 export function canAccessAdminCards(user: User): boolean {
+  return user.role === 'admin' || user.role === 'operator';
+}
+
+/** Panel de filtros en administración: `admin` o `operator` (permiso `admin.filters.manage`). */
+export function canAccessAdminFilters(user: User): boolean {
+  return user.role === 'admin' || user.role === 'operator';
+}
+
+/** Secciones solo para `admin`: usuarios, interacciones, etc. */
+export function canAccessSystemAdmin(user: User): boolean {
   return user.role === 'admin';
 }
 

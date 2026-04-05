@@ -2,6 +2,7 @@
 import DashboardLayout from '@layouts/DashboardLayout.astro';
 import { AdminFiltersManager } from '@components/admin/filters';
 import { ApiHttpError, getAdminFilters, getFilterTypes } from '@lib/api';
+import { canAccessAdminFilters } from '@lib/auth';
 import type { AdminFilter } from '@types/filter';
 import type { FilterType } from '@types/filter';
 
@@ -10,7 +11,7 @@ if (!user) {
   return Astro.redirect('/login');
 }
 
-if (user.role !== 'admin') {
+if (!canAccessAdminFilters(user)) {
   return Astro.redirect('/dashboard');
 }
 
