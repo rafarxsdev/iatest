@@ -19,6 +19,9 @@ export class Card {
   @Column({ type: 'jsonb' })
   widgetConfiguration!: Record<string, unknown>;
 
+  @Column({ name: 'icon_name', type: 'varchar', length: 100, nullable: true })
+  iconName!: string | null;
+
   @Column({ type: 'int' })
   sortOrder!: number;
 

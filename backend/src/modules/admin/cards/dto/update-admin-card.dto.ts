@@ -1,4 +1,15 @@
-import { IsBoolean, Equals, IsInt, IsObject, IsOptional, IsString, IsUUID, Min, ValidateIf } from 'class-validator';
+import {
+  IsBoolean,
+  Equals,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  Min,
+  ValidateIf,
+} from 'class-validator';
 
 export class UpdateAdminCardDto {
   @IsOptional()
@@ -20,6 +31,12 @@ export class UpdateAdminCardDto {
   @IsOptional()
   @IsObject()
   widgetConfiguration?: Record<string, unknown>;
+
+  @IsOptional()
+  @ValidateIf((_o, v) => v !== null)
+  @IsString()
+  @MaxLength(100)
+  iconName?: string | null;
 
   @IsOptional()
   @IsBoolean()

@@ -10,6 +10,7 @@ export interface CardResponseDto {
   id: string;
   title: string;
   htmlContent: string;
+  iconName: string | null;
   widgetType: { code: string; label: string };
   interactionStatus: {
     used: number;
@@ -64,6 +65,7 @@ export class CardsService {
         id: card.id,
         title: card.title,
         htmlContent: card.htmlContent,
+        iconName: card.iconName,
         widgetType: {
           code: card.widgetType.code,
           label: card.widgetType.label,

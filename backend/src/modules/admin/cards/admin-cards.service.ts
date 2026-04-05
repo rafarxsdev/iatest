@@ -6,12 +6,21 @@ import type { Card } from '@database/entities/card.entity';
 import type { CreateAdminCardDto } from './dto/create-admin-card.dto';
 import type { UpdateAdminCardDto } from './dto/update-admin-card.dto';
 
+function normalizeIconName(input: string | null | undefined): string | null {
+  if (input === undefined || input === null) {
+    return null;
+  }
+  const t = input.trim();
+  return t.length === 0 ? null : t;
+}
+
 export interface AdminCardListItem {
   id: string;
   title: string;
   htmlContent: string;
   filter: { id: string; label: string };
   widgetType: { id: string; code: string; label: string };
+  iconName: string | null;
   isActive: boolean;
   isDeleted: boolean;
   sortOrder: number;
@@ -40,6 +49,7 @@ export class AdminCardsService {
         code: card.widgetType.code,
         label: card.widgetType.label,
       },
+      iconName: card.iconName,
       isActive: card.isActive,
       isDeleted: card.deletedAt !== null,
       sortOrder: card.sortOrder,
@@ -105,6 +115,7 @@ export class AdminCardsService {
 
     const htmlContent = dto.htmlContent.trim();
     const widgetConfiguration = dto.widgetConfiguration ?? {};
+    const iconName = normalizeIconName(dto.iconName);
 
     const card = await this.adminCardsRepository.create({
       title: dto.title.trim(),
@@ -112,6 +123,7 @@ export class AdminCardsService {
       filterId: dto.filterId,
       widgetTypeId: dto.widgetTypeId,
       widgetConfiguration,
+      iconName,
       sortOrder: dto.sortOrder ?? 0,
     });
 
@@ -151,6 +163,7 @@ export class AdminCardsService {
       dto.filterId === undefined &&
       dto.widgetTypeId === undefined &&
       dto.widgetConfiguration === undefined &&
+      dto.iconName === undefined &&
       dto.isActive === undefined &&
       dto.sortOrder === undefined
     ) {
@@ -182,6 +195,7 @@ export class AdminCardsService {
       filterId: dto.filterId,
       widgetTypeId: dto.widgetTypeId,
       widgetConfiguration: dto.widgetConfiguration,
+      iconName: dto.iconName !== undefined ? normalizeIconName(dto.iconName) : undefined,
       isActive: dto.isActive,
       sortOrder: dto.sortOrder,
     });

@@ -10,6 +10,7 @@ export interface CreateAdminCardRow {
   filterId: string;
   widgetTypeId: string;
   widgetConfiguration: Record<string, unknown>;
+  iconName: string | null;
   sortOrder: number;
 }
 
@@ -19,6 +20,7 @@ export interface UpdateAdminCardRow {
   filterId?: string;
   widgetTypeId?: string;
   widgetConfiguration?: Record<string, unknown>;
+  iconName?: string | null;
   isActive?: boolean;
   sortOrder?: number;
 }
@@ -76,6 +78,7 @@ export class AdminCardsRepository {
       title: row.title,
       htmlContent: row.htmlContent,
       widgetConfiguration: row.widgetConfiguration,
+      iconName: row.iconName,
       sortOrder: row.sortOrder,
       isActive: true,
       createdAt: now,
@@ -106,6 +109,9 @@ export class AdminCardsRepository {
     }
     if (row.widgetConfiguration !== undefined) {
       card.widgetConfiguration = row.widgetConfiguration;
+    }
+    if (row.iconName !== undefined) {
+      card.iconName = row.iconName;
     }
     if (row.isActive !== undefined) {
       card.isActive = row.isActive;

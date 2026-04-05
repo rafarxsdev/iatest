@@ -1,4 +1,4 @@
-import { IsInt, IsObject, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsInt, IsObject, IsOptional, IsString, IsUUID, MaxLength, Min, ValidateIf } from 'class-validator';
 
 export class CreateAdminCardDto {
   @IsString()
@@ -16,6 +16,13 @@ export class CreateAdminCardDto {
   @IsOptional()
   @IsObject()
   widgetConfiguration?: Record<string, unknown>;
+
+  /** Nombre del glifo Material Symbols Outlined (ej. `dashboard`). */
+  @IsOptional()
+  @ValidateIf((_o, v) => v !== null)
+  @IsString()
+  @MaxLength(100)
+  iconName?: string | null;
 
   @IsOptional()
   @IsInt()
