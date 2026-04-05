@@ -101,6 +101,7 @@ CREATE TABLE content.cards (
   filter_id            UUID         NOT NULL,
   widget_type_id       UUID         NOT NULL,
   widget_configuration JSONB        NOT NULL DEFAULT '{}',
+  icon_name            VARCHAR(100) NULL,
   sort_order           INTEGER      NOT NULL DEFAULT 0,
   is_active            BOOLEAN      NOT NULL DEFAULT TRUE,
   created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
@@ -117,6 +118,7 @@ CREATE TABLE content.cards (
 COMMENT ON TABLE  content.cards                    IS 'Cards del dashboard con HTML sanitizado y widget embebido';
 COMMENT ON COLUMN content.cards.html_content       IS 'HTML sanitizado en el backend (sanitize-html) antes de persistir';
 COMMENT ON COLUMN content.cards.widget_configuration IS 'Configuración específica del widget de esta card. Validada contra widget_types.configuration_schema';
+COMMENT ON COLUMN content.cards.icon_name          IS 'Nombre del glifo Material Symbols Outlined (ej. settings_suggest); NULL = fallback en cliente';
 COMMENT ON COLUMN content.cards.deleted_at         IS 'Soft delete: NULL = activa';
 
 CREATE TRIGGER trg_cards_updated_at
