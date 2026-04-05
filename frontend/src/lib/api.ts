@@ -1,6 +1,11 @@
 import type { AdminCard, Card, CardFormData } from '@types/card';
 import type { AdminFilter, Filter, FilterFormData, FilterType, WidgetTypeOption } from '@types/filter';
-import type { InteractionStatus } from '@types/interaction';
+import type {
+  InteractionLogEntry,
+  InteractionStatus,
+  UserInteractionDetail,
+  UserWithInteractionSummary,
+} from '@types/interaction';
 import type {
   AdminUser,
   AuthMeUser,
@@ -626,4 +631,75 @@ export async function unlockUser(id: string): Promise<void> {
   if (!r.success) {
     throw new Error(r.message);
   }
+}
+
+export async function getUsersWithInteractions(
+  search?: string,
+  cookieHeader?: string,
+): Promise<UserWithInteractionSummary[]> {
+  const q = new URLSearchParams();
+  if (search !== undefined && search.length > 0) {
+    q.set('search', search);
+  }
+  const path = q.toString() ? `/api/admin/interactions/users?${q.toString()}` : '/api/admin/interactions/users';
+  const r = await apiFetch<UserWithInteractionSummary[]>(path, { method: 'GET' }, cookieHeader);
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  return r.data;
+}
+
+export async function getUserInteractions(
+  userId: string,
+  cookieHeader?: string,
+): Promise<UserInteractionDetail[]> {
+  const r = await apiFetch<UserInteractionDetail[]>(`/api/admin/interactions/users/${userId}`, {
+    method: 'GET',
+  }, cookieHeader);
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  return r.data;
+}
+
+export async function getInteractionHistory(
+  userId: string,
+  cardId: string,
+  cookieHeader?: string,
+): Promise<InteractionLogEntry[]> {
+  const r = await apiFetch<InteractionLogEntry[]>(
+    `/api/admin/interactions/users/${userId}/cards/${cardId}/history`,
+    { method: 'GET' },
+    cookieHeader,
+  );
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  return r.data;
+}
+
+export async function resetSingleInteraction(userId: string, cardId: string): Promise<void> {
+  const r = await apiFetch<null>(`/api/admin/interactions/users/${userId}/cards/${cardId}/reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+}
+
+export async function resetAllInteractions(userId: string): Promise<{ resetCount: number }> {
+  const r = await apiFetch<{ resetCount: number }>(
+    `/api/admin/interactions/users/${userId}/reset-all`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    },
+  );
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  return r.data;
 }
