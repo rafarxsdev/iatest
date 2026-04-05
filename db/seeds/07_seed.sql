@@ -152,6 +152,7 @@ INSERT INTO logs.action_types (code, module, description) VALUES
   ('AUTH_LOGIN_FAILED',      'auth',      'Intento de login fallido por credenciales incorrectas'),
   ('AUTH_ACCOUNT_BLOCKED',   'auth',      'Cuenta bloqueada por superar el límite de intentos fallidos'),
   ('AUTH_TOKEN_REVOKED',     'auth',      'Token JWT revocado manualmente'),
+  ('AUTH_PROFILE_UPDATED',   'auth',      'Perfil de usuario actualizado (nombre o contraseña)'),
   -- Dashboard
   ('DASHBOARD_VIEW',         'dashboard', 'Usuario accedió al dashboard'),
   ('FILTER_APPLIED',         'dashboard', 'Usuario aplicó un filtro en el dashboard'),
