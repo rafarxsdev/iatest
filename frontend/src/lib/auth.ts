@@ -1,5 +1,5 @@
 import type { User } from '@types/user';
-import { apiFetch } from './api';
+import { getMe } from './api';
 
 /** Solo el rol `admin` puede abrir el panel de administración de cards (UI y SSR). */
 export function canAccessAdminCards(user: User): boolean {
@@ -12,14 +12,12 @@ export function canAccessAdminCards(user: User): boolean {
  */
 export async function getSession(cookieHeader: string): Promise<User | null> {
   try {
-    const r = await apiFetch<User>('/api/auth/me', { method: 'GET' }, cookieHeader);
-    if (!r.success) {
-      return null;
-    }
-    const u = r.data;
+    const me = await getMe(cookieHeader);
     return {
-      ...u,
-      permissions: u.permissions ?? [],
+      id: me.id,
+      email: me.email,
+      fullName: me.fullName,
+      role: me.role.name,
     };
   } catch {
     return null;

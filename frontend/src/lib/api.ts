@@ -1,7 +1,15 @@
 import type { AdminCard, Card, CardFormData } from '@types/card';
 import type { AdminFilter, Filter, FilterFormData, FilterType, WidgetTypeOption } from '@types/filter';
 import type { InteractionStatus } from '@types/interaction';
-import type { User } from '@types/user';
+import type {
+  AdminUser,
+  AuthMeUser,
+  ProfileFormData,
+  User,
+  UserFormData,
+  UserRole,
+  UserSecurityStatus,
+} from '@types/user';
 
 export type ApiSuccess<T> = { success: true; data: T; meta?: { total: number; page: number; limit: number } };
 export type ApiFailure = { success: false; message: string; data?: unknown };
@@ -402,6 +410,219 @@ export async function deactivateFilter(id: string): Promise<void> {
 
 export async function restoreFilter(id: string): Promise<void> {
   const r = await apiFetch<unknown>(`/api/admin/filters/${id}/restore`, { method: 'PATCH' });
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+}
+
+function mapUserRole(r: { id: string; name: string; description?: string | null }): UserRole {
+  return {
+    id: r.id,
+    name: r.name,
+    description: r.description ?? '',
+  };
+}
+
+function mapSecurityStatus(s: UserSecurityStatus): UserSecurityStatus {
+  return {
+    failedLoginAttempts: s.failedLoginAttempts,
+    loginBlockedUntil: s.loginBlockedUntil,
+    passwordChangedAt: s.passwordChangedAt,
+  };
+}
+
+/** Respuesta del backend para un usuario admin (sin `isDeleted` ni `description` en rol). */
+type AdminUserApi = Omit<AdminUser, 'isDeleted' | 'role'> & {
+  role: { id: string; name: string };
+  isDeleted?: boolean;
+};
+
+function mapAdminUser(raw: AdminUserApi): AdminUser {
+  return {
+    id: raw.id,
+    email: raw.email,
+    fullName: raw.fullName,
+    role: mapUserRole({ ...raw.role, description: (raw.role as { description?: string }).description }),
+    isActive: raw.isActive,
+    isDeleted: raw.isDeleted ?? false,
+    lastLoginAt: raw.lastLoginAt,
+    createdAt: raw.createdAt,
+    securityStatus: mapSecurityStatus(raw.securityStatus),
+  };
+}
+
+export async function getMe(cookieHeader?: string): Promise<AuthMeUser> {
+  const r = await apiFetch<{
+    id: string;
+    email: string;
+    fullName: string;
+    role: { id: string; name: string; description?: string | null };
+    lastLoginAt: string | null;
+    createdAt: string;
+  }>('/api/auth/me', { method: 'GET' }, cookieHeader);
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  const d = r.data;
+  return {
+    id: d.id,
+    email: d.email,
+    fullName: d.fullName,
+    role: mapUserRole(d.role),
+    lastLoginAt: d.lastLoginAt,
+    createdAt: d.createdAt,
+  };
+}
+
+export async function updateProfile(data: Omit<ProfileFormData, 'confirmPassword'>): Promise<User> {
+  const body: Record<string, string> = {};
+  if (data.fullName !== undefined) {
+    body.fullName = data.fullName;
+  }
+  if (data.currentPassword !== undefined) {
+    body.currentPassword = data.currentPassword;
+  }
+  if (data.newPassword !== undefined) {
+    body.newPassword = data.newPassword;
+  }
+  const r = await apiFetch<{
+    id: string;
+    email: string;
+    fullName: string;
+    role: { id: string; name: string; description?: string | null };
+    lastLoginAt: string | null;
+    createdAt: string;
+  }>('/api/auth/profile', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  const d = r.data;
+  return {
+    id: d.id,
+    email: d.email,
+    fullName: d.fullName,
+    role: mapUserRole(d.role).name,
+  };
+}
+
+export async function getAdminUsers(
+  params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    roleId?: string;
+    isActive?: boolean;
+  },
+  cookieHeader?: string,
+): Promise<{ data: AdminUser[]; meta: { total: number; page: number; limit: number } }> {
+  const q = new URLSearchParams();
+  if (params.page !== undefined) {
+    q.set('page', String(params.page));
+  }
+  if (params.limit !== undefined) {
+    q.set('limit', String(params.limit));
+  }
+  if (params.search !== undefined && params.search.length > 0) {
+    q.set('search', params.search);
+  }
+  if (params.roleId !== undefined && params.roleId.length > 0) {
+    q.set('roleId', params.roleId);
+  }
+  if (params.isActive !== undefined) {
+    q.set('isActive', String(params.isActive));
+  }
+  const qs = q.toString();
+  const path = qs ? `/api/admin/users?${qs}` : '/api/admin/users';
+  const r = await apiFetch<AdminUserApi[]>(path, { method: 'GET' }, cookieHeader);
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  if (!r.meta) {
+    throw new Error('Respuesta de usuarios admin sin meta');
+  }
+  return { data: r.data.map(mapAdminUser), meta: r.meta };
+}
+
+export async function getAdminUserById(id: string, cookieHeader?: string): Promise<AdminUser> {
+  const r = await apiFetch<AdminUserApi>(`/api/admin/users/${id}`, { method: 'GET' }, cookieHeader);
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  return mapAdminUser(r.data);
+}
+
+export async function getRoles(cookieHeader?: string): Promise<UserRole[]> {
+  const r = await apiFetch<{ id: string; name: string; description: string | null }[]>(
+    '/api/admin/roles',
+    { method: 'GET' },
+    cookieHeader,
+  );
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  return r.data.map((row) => mapUserRole(row));
+}
+
+export async function createUser(data: UserFormData): Promise<AdminUser> {
+  const body: Record<string, unknown> = {
+    email: data.email,
+    fullName: data.fullName,
+    roleId: data.roleId,
+    password: data.password,
+  };
+  const r = await apiFetch<AdminUserApi>('/api/admin/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  return mapAdminUser(r.data);
+}
+
+export async function updateUser(id: string, data: Partial<UserFormData>): Promise<AdminUser> {
+  const body: Record<string, unknown> = {};
+  if (data.fullName !== undefined) {
+    body.fullName = data.fullName;
+  }
+  if (data.roleId !== undefined) {
+    body.roleId = data.roleId;
+  }
+  if (data.isActive !== undefined) {
+    body.isActive = data.isActive;
+  }
+  const r = await apiFetch<AdminUserApi>(`/api/admin/users/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+  return mapAdminUser(r.data);
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  const r = await apiFetch<null>(`/api/admin/users/${id}`, { method: 'DELETE' });
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+}
+
+export async function restoreUser(id: string): Promise<void> {
+  const r = await apiFetch<unknown>(`/api/admin/users/${id}/restore`, { method: 'PATCH' });
+  if (!r.success) {
+    throw new Error(r.message);
+  }
+}
+
+export async function unlockUser(id: string): Promise<void> {
+  const r = await apiFetch<unknown>(`/api/admin/users/${id}/unlock`, { method: 'PATCH' });
   if (!r.success) {
     throw new Error(r.message);
   }

@@ -1,0 +1,47 @@
+---
+import DashboardLayout from '@layouts/DashboardLayout.astro';
+import { AdminUsersManager } from '@components/admin/users';
+import { ApiHttpError, getAdminUsers, getRoles } from '@lib/api';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+
+if (user.role !== 'admin') {
+  return Astro.redirect('/dashboard');
+}
+
+const cookieHeader = Astro.request.headers.get('cookie') ?? '';
+
+let users;
+let total = 0;
+let roles;
+
+try {
+  const [listRes, rolesRes] = await Promise.all([
+    getAdminUsers({ page: 1, limit: 20 }, cookieHeader),
+    getRoles(cookieHeader),
+  ]);
+  users = listRes.data;
+  total = listRes.meta.total;
+  roles = rolesRes;
+} catch (e) {
+  if (e instanceof ApiHttpError && e.status === 401) {
+    return Astro.redirect('/login');
+  }
+  throw e;
+}
+---
+
+<DashboardLayout user={user}>
+  <main class="pt-20 px-4 pb-36 max-w-screen-xl mx-auto w-full">
+    <AdminUsersManager
+      client:load
+      initialUsers={users}
+      initialTotal={total}
+      roles={roles}
+      currentUserId={user.id}
+    />
+  </main>
+</DashboardLayout>

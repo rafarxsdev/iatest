@@ -1,0 +1,29 @@
+---
+import DashboardLayout from '@layouts/DashboardLayout.astro';
+import { ProfileManager } from '@components/profile';
+import { ApiHttpError, getMe } from '@lib/api';
+import type { AuthMeUser } from '@types/user';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+
+const cookieHeader = Astro.request.headers.get('cookie') ?? '';
+
+let userData: AuthMeUser;
+try {
+  userData = await getMe(cookieHeader);
+} catch (e) {
+  if (e instanceof ApiHttpError && e.status === 401) {
+    return Astro.redirect('/login');
+  }
+  throw e;
+}
+---
+
+<DashboardLayout user={user}>
+  <main class="pt-20 px-4 pb-36 max-w-screen-xl mx-auto w-full">
+    <ProfileManager client:load userData={userData} />
+  </main>
+</DashboardLayout>
