@@ -162,3 +162,37 @@ CREATE RULE no_update_interaction_logs AS
 
 CREATE RULE no_delete_interaction_logs AS
   ON DELETE TO logs.interaction_logs DO INSTEAD NOTHING;
+
+-- -----------------------------------------------------------------------------
+-- Catálogo inicial de action_types (instalaciones con o sin seed semántico)
+-- Idempotente: bases existentes o re-ejecución no duplican códigos
+-- -----------------------------------------------------------------------------
+INSERT INTO logs.action_types (code, module, description) VALUES
+  ('AUTH_LOGIN',             'auth',      'Inicio de sesión exitoso'),
+  ('AUTH_LOGOUT',            'auth',      'Cierre de sesión'),
+  ('AUTH_LOGIN_FAILED',      'auth',      'Intento de login fallido por credenciales incorrectas'),
+  ('AUTH_ACCOUNT_BLOCKED',   'auth',      'Cuenta bloqueada por superar el límite de intentos fallidos'),
+  ('AUTH_TOKEN_REVOKED',     'auth',      'Token JWT revocado manualmente'),
+  ('AUTH_PROFILE_UPDATED',   'auth',      'Perfil de usuario actualizado (nombre o contraseña)'),
+  ('DASHBOARD_VIEW',         'dashboard', 'Usuario accedió al dashboard'),
+  ('FILTER_APPLIED',         'dashboard', 'Usuario aplicó un filtro en el dashboard'),
+  ('CARD_VIEW',              'cards',     'Card visualizada por el usuario'),
+  ('WIDGET_INTERACTION',     'cards',     'Usuario interactuó exitosamente con un widget'),
+  ('WIDGET_BLOCKED',         'cards',     'Interacción bloqueada por haber alcanzado el límite'),
+  ('WIDGET_RESET',           'cards',     'Contador de interacciones reiniciado para un usuario/card'),
+  ('ADMIN_USER_CREATED',     'admin',     'Nuevo usuario creado'),
+  ('ADMIN_USER_UPDATED',     'admin',     'Usuario modificado'),
+  ('ADMIN_USER_DEACTIVATED', 'admin',     'Usuario desactivado'),
+  ('ADMIN_CARD_CREATED',     'admin',     'Nueva card creada'),
+  ('ADMIN_CARD_UPDATED',     'admin',     'Card modificada'),
+  ('ADMIN_CARD_DELETED',     'admin',     'Card eliminada (soft delete)'),
+  ('ADMIN_CARDS_LISTED',     'admin',     'Listado de cards consultado en administración'),
+  ('ADMIN_FILTER_CREATED',   'admin',     'Filtro del dashboard creado'),
+  ('ADMIN_FILTER_DEACTIVATED','admin',    'Filtro del dashboard desactivado'),
+  ('ADMIN_FILTER_RESTORED',  'admin',     'Filtro del dashboard reactivado'),
+  ('CONFIG_PARAMETER_UPDATED','config',   'Parámetro del sistema modificado'),
+  ('CONFIG_POLICY_UPDATED',  'config',    'Política de interacción modificada'),
+  ('ADMIN_USERS_LISTED',     'admin',     'Listado de usuarios consultado en administración'),
+  ('CONFIG_POLICIES_LISTED', 'config',    'Políticas de interacción listadas para una card'),
+  ('ADMIN_PARAMETERS_LISTED','admin',     'Parámetros del sistema listados')
+ON CONFLICT (code) DO NOTHING;
