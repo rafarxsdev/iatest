@@ -1,0 +1,32 @@
+---
+import DashboardLayout from '@layouts/DashboardLayout.astro';
+import { InteractionsManager } from '@components/admin/interactions';
+import { ApiHttpError, getUsersWithInteractions } from '@lib/api';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/login');
+}
+
+if (user.role !== 'admin') {
+  return Astro.redirect('/dashboard');
+}
+
+const cookieHeader = Astro.request.headers.get('cookie') ?? '';
+
+let users;
+try {
+  users = await getUsersWithInteractions(undefined, cookieHeader);
+} catch (e) {
+  if (e instanceof ApiHttpError && e.status === 401) {
+    return Astro.redirect('/login');
+  }
+  throw e;
+}
+---
+
+<DashboardLayout user={user}>
+  <main class="pt-20 px-4 pb-36 max-w-screen-xl mx-auto w-full">
+    <InteractionsManager client:load initialUsers={users} />
+  </main>
+</DashboardLayout>
