@@ -126,10 +126,6 @@ INSERT INTO content.filter_types (code, description) VALUES
 -- content.widget_types
 -- =============================================================================
 INSERT INTO content.widget_types (code, label, default_max_interactions, configuration_schema) VALUES
-  ('form',   'Formulario',        3,    '{"required": ["action_url"], "properties": {"action_url": {"type": "string"}}}'),
-  ('video',  'Video embebido',    NULL, '{"required": ["video_url"], "properties": {"video_url": {"type": "string"}, "autoplay": {"type": "boolean"}}}'),
-  ('quiz',   'Quiz interactivo',  1,    '{"required": ["questions"], "properties": {"questions": {"type": "array"}}}'),
-  ('survey', 'Encuesta',          1,    '{"required": ["survey_id"], "properties": {"survey_id": {"type": "string"}}}'),
   ('embed',  'Contenido externo', 5,    '{"required": ["embed_url"], "properties": {"embed_url": {"type": "string"}, "height": {"type": "number"}}}');
 
 -- =============================================================================
