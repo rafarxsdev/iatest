@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "start": "node ./dist/server/entry.mjs",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "fetch:icons": "node --loader ts-node/esm scripts/fetch-material-icons.ts"
   },
   "dependencies": {
     "@astrojs/node": "^8.3.4",
@@ -17,6 +18,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@types/node": "^22.10.2",
     "@astrojs/tailwind": "^6.0.2",
     "@tailwindcss/container-queries": "^0.1.1",
     "@tailwindcss/forms": "^0.5.11",
@@ -24,6 +26,7 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "tailwindcss": "^3.4.17",
+    "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
   }
 }

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { AdminCard, CardFormData } from '@types/card';
 import type { Filter, WidgetTypeOption } from '@types/filter';
+import { IconPicker } from './IconPicker';
 
 export interface CardFormModalProps {
   card: AdminCard | null;
@@ -17,6 +18,7 @@ function emptyForm(): CardFormData {
     filterId: '',
     widgetTypeId: '',
     widgetConfiguration: {},
+    iconName: 'widgets',
     sortOrder: 0,
     isActive: true,
   };
@@ -29,6 +31,7 @@ function cardToForm(c: AdminCard): CardFormData {
     filterId: c.filter.id,
     widgetTypeId: c.widgetType.id,
     widgetConfiguration: {},
+    iconName: c.iconName ?? 'widgets',
     sortOrder: c.sortOrder,
     isActive: c.isActive,
   };
@@ -162,6 +165,14 @@ export function CardFormModal({ card, filters, widgetTypes, onSave, onClose }: C
               ))}
             </select>
             {errors.widgetTypeId ? <p className="text-error text-sm mt-1">{errors.widgetTypeId}</p> : null}
+          </div>
+
+          <div>
+            <span className="block text-sm font-semibold text-on-surface mb-2">Ícono</span>
+            <IconPicker
+              value={formData.iconName}
+              onChange={(iconName) => setFormData((f) => ({ ...f, iconName }))}
+            />
           </div>
 
           <div>

@@ -8,6 +8,10 @@ export default defineConfig({
   adapter: node({ mode: 'standalone' }),
   integrations: [react(), tailwind()],
   vite: {
+    // El catálogo de íconos es muy grande; no pre-empaquetarlo en deps compartidas (evita fallos MIME / corruptos en dev).
+    optimizeDeps: {
+      exclude: ['src/lib/icons-catalog.ts'],
+    },
     server: {
       proxy: {
         // Misma origen que el frontend (:4321): la cookie JWT queda en localhost:4321

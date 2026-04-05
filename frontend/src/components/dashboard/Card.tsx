@@ -1,14 +1,6 @@
 import type { Card as CardType } from '@types/card';
 import InteractionGuard from './InteractionGuard';
 
-const WIDGET_ICONS: Record<string, string> = {
-  form: 'edit_note',
-  video: 'play_circle',
-  quiz: 'quiz',
-  survey: 'assignment',
-  embed: 'web_asset',
-};
-
 const BADGE_STYLES: Record<string, string> = {
   form: 'bg-secondary-fixed text-on-secondary-fixed',
   video: 'bg-tertiary-fixed text-on-tertiary-fixed-variant',
@@ -23,7 +15,7 @@ export interface CardProps {
 }
 
 export default function Card({ card }: CardProps) {
-  const icon = WIDGET_ICONS[card.widgetType.code] ?? 'widgets';
+  const iconName = card.iconName ?? 'widgets';
   const badgeStyle = BADGE_STYLES[card.widgetType.code] ?? BADGE_STYLES.default;
 
   return (
@@ -42,7 +34,7 @@ export default function Card({ card }: CardProps) {
             className="material-symbols-outlined"
             style={{ fontVariationSettings: "'FILL' 1" }}
           >
-            {icon}
+            {iconName}
           </span>
         </div>
       </div>
