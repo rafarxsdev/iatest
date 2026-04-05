@@ -97,7 +97,7 @@ export function CardFormModal({ card, filters, widgetTypes, onSave, onClose }: C
       >
         <div className="sticky top-0 flex items-start justify-between gap-4 p-6 pb-4 bg-surface-container-lowest rounded-t-2xl border-b border-transparent">
           <h2 id="card-form-title" className="text-xl font-bold font-headline text-on-surface">
-            {card ? 'Editar Card' : 'Nueva Card'}
+            {card ? 'Editar Agente' : 'Nuevo Agente'}
           </h2>
           <button
             type="button"

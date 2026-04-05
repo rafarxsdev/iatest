@@ -139,7 +139,7 @@ export function AdminCardsManager({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold font-headline text-on-surface mb-6">Gestión de Cards</h1>
+      <h1 className="text-2xl font-bold font-headline text-on-surface mb-6">Gestión de Agentes</h1>
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-md">
@@ -164,7 +164,7 @@ export function AdminCardsManager({
           }}
         >
           <span className="material-symbols-outlined text-xl">add</span>
-          Nueva Card
+          Nuevo Agente
         </button>
       </div>
 
