@@ -98,7 +98,7 @@ INSERT INTO security.users (
   is_active
 ) VALUES (
   '20000000-0000-0000-0000-000000000001',
-  'admin@localhost',
+  'admin@example.com',
   '$2b$12$sljNmbWZG1qzAono9A7Lre3EY7l9/WgjUHFDb6TcepzQpVZAVlA1.',
   'Administrador',
   '00000000-0000-0000-0000-000000000001',

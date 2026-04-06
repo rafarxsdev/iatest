@@ -19,6 +19,10 @@ set -euo pipefail
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
 DB_NAME="${DB_NAME:-app_db}"
+# Evita \r o espacios (p. ej. .env en Windows) que rompen la comparación con pg_database.datname
+DB_NAME="${DB_NAME//$'\r'/}"
+DB_NAME="${DB_NAME#"${DB_NAME%%[![:space:]]*}"}"
+DB_NAME="${DB_NAME%"${DB_NAME##*[![:space:]]}"}"
 DB_USER="${DB_USER:-postgres}"
 DB_PASSWORD="${DB_PASSWORD:-}"
 
@@ -90,26 +94,97 @@ check_connection() {
 }
 
 db_exists() {
-  PGPASSWORD="$DB_PASSWORD" psql \
+  local out
+  # count(*) es más robusto que EXISTS + t/f según cliente/locale de psql
+  out="$(PGPASSWORD="$DB_PASSWORD" psql \
     --host="$DB_HOST" \
     --port="$DB_PORT" \
     --username="$DB_USER" \
     --dbname="postgres" \
-    --tuples-only \
-    --command="SELECT 1 FROM pg_database WHERE datname = '$DB_NAME';" \
-    2>/dev/null | grep -q 1
+    -t -A \
+    --command="SELECT count(*)::text FROM pg_database WHERE datname = '$DB_NAME';" \
+    2>/dev/null)" || return 1
+  out="$(printf '%s' "$out" | tr -d '[:space:]')"
+  [[ "$out" == "1" ]]
+}
+
+# Mensajes típicos: EN "already exists", ES "ya existe", SQLSTATE 42P04 (duplicate_database)
+is_duplicate_database_error() {
+  local msg="$1"
+  case "$(printf '%s' "$msg" | tr '[:upper:]' '[:lower:]')" in
+    *already*exists*) return 0 ;;
+    *ya*existe*) return 0 ;;
+    *42p04*) return 0 ;;
+    *duplicate*database*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# Si Postgres ya tiene la BD (p. ej. POSTGRES_DB en Docker), conectar y listo: no ejecutar CREATE DATABASE.
+app_database_ready() {
+  set +e
+  PGPASSWORD="$DB_PASSWORD" psql \
+    --host="$DB_HOST" \
+    --port="$DB_PORT" \
+    --username="$DB_USER" \
+    --dbname="$DB_NAME" \
+    --command="SELECT 1;" \
+    >> "$LOG_FILE" 2>&1
+  local st=$?
+  set -e
+  if [[ "$st" -eq 0 ]]; then
+    return 0
+  fi
+  return 1
+}
+
+ensure_database() {
+  log "INFO" "Comprobando base de datos '$DB_NAME' (conexión directa; típico en Docker con POSTGRES_DB)..."
+  if app_database_ready; then
+    log "OK  " "✅ Base '$DB_NAME' accesible — se omiten CREATE y el error «already exists»"
+    return 0
+  fi
+  log "INFO" "La base aún no es accesible o no existe; comprobando catálogo / creando..."
+  if db_exists; then
+    log "INFO" "La base de datos '$DB_NAME' ya existe en el catálogo; continuando..."
+    return 0
+  fi
+  create_db
 }
 
 create_db() {
+  local out st
   log "INFO" "Creando base de datos: $DB_NAME"
-  PGPASSWORD="$DB_PASSWORD" psql \
-    --host="$DB_HOST" \
-    --port="$DB_PORT" \
-    --username="$DB_USER" \
-    --dbname="postgres" \
-    --command="CREATE DATABASE \"$DB_NAME\" ENCODING 'UTF8';" \
-    >> "$LOG_FILE" 2>&1
-  log "OK  " "✅ Base de datos creada: $DB_NAME"
+  # Con set -e, fallo de psql dentro de $(...) puede abortar el script antes de los elif;
+  # capturamos código de salida sin salir.
+  set +e
+  out="$(
+    PGPASSWORD="$DB_PASSWORD" psql \
+      --host="$DB_HOST" \
+      --port="$DB_PORT" \
+      --username="$DB_USER" \
+      --dbname="postgres" \
+      --command="CREATE DATABASE \"$DB_NAME\" ENCODING 'UTF8';" \
+      2>&1
+  )"
+  st=$?
+  set -e
+  printf '%s\n' "$out" >> "$LOG_FILE"
+
+  if [[ "$st" -eq 0 ]]; then
+    log "OK  " "✅ Base de datos creada: $DB_NAME"
+    return 0
+  fi
+  if is_duplicate_database_error "$out"; then
+    log "INFO" "La base de datos '$DB_NAME' ya existía; continuando..."
+    return 0
+  fi
+  if db_exists; then
+    log "INFO" "La base de datos '$DB_NAME' ya existía (comprobación SQL); continuando..."
+    return 0
+  fi
+  log "ERR " "❌ No se pudo crear la base de datos — revisa $LOG_FILE"
+  exit 1
 }
 
 drop_db() {
@@ -155,12 +230,8 @@ if [ "$RESET_DB" = true ]; then
   drop_db
 fi
 
-# Crear BD si no existe
-if db_exists; then
-  log "INFO" "La base de datos '$DB_NAME' ya existe, continuando..."
-else
-  create_db
-fi
+# Crear BD solo si hace falta (Docker suele crearla ya con POSTGRES_DB)
+ensure_database
 
 # =============================================================================
 # Ejecución de scripts en orden

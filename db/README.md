@@ -5,6 +5,7 @@
 ```
 db/
 ├── install.sh                     ← Script maestro de instalación
+├── install-docker.sh              ← Ejecuta install.sh vía Docker (misma red que postgres)
 ├── migrations/
 │   ├── 00_init.sql                ← Extensiones y esquemas
 │   ├── 01_security.sql            ← Usuarios, roles, permisos, sesiones
@@ -61,15 +62,37 @@ DB_PASSWORD  # default: (vacío)
 DB_HOST=db.servidor.com DB_NAME=produccion_db DB_USER=app_user DB_PASSWORD=secret ./install.sh --seed
 ```
 
+### Docker / AWS (cuando `install.sh` falla al conectar a `localhost`)
+
+Si Postgres solo está en la red de Docker, `psql` hacia `127.0.0.1` puede fallar o la contraseña no coincide con la del host. Usa el instalador que **entra en la misma red** que el contenedor `postgres` y habla con el hostname `postgres`:
+
+```bash
+# Desde la raíz del proyecto (docker compose ya arriba)
+chmod +x db/install-docker.sh
+./db/install-docker.sh --seed
+```
+
+Lee `DB_PASSWORD` o `POSTGRES_PASSWORD` del `.env` en la raíz (solo líneas `CLAVE=valor`, sin ejecutar el archivo como shell). Para otro archivo: `ENV_FILE=/ruta/.env.aws ./db/install-docker.sh --seed`.
+
 ### Usuario administrador por defecto (solo con `--seed`)
 
 | Campo        | Valor                    |
 |-------------|---------------------------|
-| Email       | `admin@localhost`       |
+| Email       | `admin@example.com`     |
 | Contraseña  | `ChangeMe123!`          |
 | Rol         | `admin`                 |
 
+El correo usa un dominio con TLD (`example.com`) para ser aceptado por la validación `@IsEmail()` del backend sin opciones extra.
+
 Cambia la contraseña inmediatamente en entornos expuestos.
+
+**Si ya cargaste un seed antiguo con `admin@localhost`**, actualiza el email en la base (no hace falta tocar el hash de la contraseña):
+
+```sql
+UPDATE security.users
+SET email = 'admin@example.com'
+WHERE id = '20000000-0000-0000-0000-000000000001';
+```
 
 ---
 
