@@ -9,6 +9,14 @@ function isPublicPath(pathname: string): boolean {
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const pathname = context.url.pathname;
+
+  // El API REST vive en Express (:3000). Con PUBLIC_BACKEND_URL el navegador no pasa por aquí;
+  // si alguien llama /api/* al origen del Astro (:4321), no debe redirigirse a /login (302).
+  // En producción sin proxy, configura PUBLIC_BACKEND_URL o un reverse proxy hacia el backend.
+  if (pathname.startsWith('/api/')) {
+    return next();
+  }
+
   const cookieHeader = context.request.headers.get('cookie') ?? '';
   const user = await getSession(cookieHeader);
 
