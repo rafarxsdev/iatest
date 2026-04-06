@@ -24,6 +24,7 @@ backend/cookies.txt
 # Archivos binarios / artefactos opcionales
 *.zip
 code.html
+instrucciones.md
 
 # Sistema operativo
 .DS_Store
