@@ -35,6 +35,24 @@ function parseBcryptRounds(raw: string | undefined, defaultValue: number): numbe
 }
 
 /**
+ * Flag Secure de la cookie JWT: en HTTP el navegador rechaza Secure=true.
+ * Por defecto: true si FRONTEND_URL es https://; si no, false.
+ * Override: COOKIE_SECURE=true|false
+ */
+function parseCookieSecure(frontendUrl: string, raw: string | undefined): boolean {
+  if (raw !== undefined && raw.trim() !== '') {
+    const v = raw.trim().toLowerCase();
+    if (v === 'true' || v === '1') {
+      return true;
+    }
+    if (v === 'false' || v === '0') {
+      return false;
+    }
+  }
+  return frontendUrl.trim().toLowerCase().startsWith('https:');
+}
+
+/**
  * Configuración validada al arranque. Todas las variables obligatorias de .cursorrules.
  */
 export class EnvConfig {
@@ -51,11 +69,14 @@ export class EnvConfig {
   readonly jwtExpiresIn: string;
   readonly cookieSecret: string;
   readonly bcryptRounds: number;
+  /** Cookie access_token: Secure solo con HTTPS (o COOKIE_SECURE explícito). */
+  readonly cookieSecure: boolean;
 
   constructor() {
     this.nodeEnv = optionalWithDefault('NODE_ENV', process.env.NODE_ENV, 'development');
     this.port = parsePort('PORT', process.env.PORT, 3000);
     this.frontendUrl = requireNonEmpty('FRONTEND_URL', process.env.FRONTEND_URL);
+    this.cookieSecure = parseCookieSecure(this.frontendUrl, process.env.COOKIE_SECURE);
 
     this.dbHost = requireNonEmpty('DB_HOST', process.env.DB_HOST);
     this.dbPort = parsePort('DB_PORT', process.env.DB_PORT, 5432);

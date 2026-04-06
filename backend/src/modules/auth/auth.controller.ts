@@ -43,7 +43,7 @@ export class AuthController {
 
     res.cookie('access_token', result.token, {
       httpOnly: true,
-      secure: env.nodeEnv === 'production',
+      secure: env.cookieSecure,
       sameSite: 'strict',
       path: '/',
       ...(maxAgeMs !== undefined && maxAgeMs > 0 ? { maxAge: maxAgeMs } : {}),
@@ -86,7 +86,7 @@ export class AuthController {
 
     res.clearCookie('access_token', {
       httpOnly: true,
-      secure: env.nodeEnv === 'production',
+      secure: env.cookieSecure,
       sameSite: 'strict',
       path: '/',
     });
