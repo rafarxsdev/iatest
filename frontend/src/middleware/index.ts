@@ -1,4 +1,5 @@
 import { defineMiddleware } from 'astro:middleware';
+import { backendBaseUrl } from '@lib/api-base';
 import { getSession } from '@lib/auth';
 
 const PUBLIC_ROUTES = ['/login'] as const;
@@ -7,17 +8,9 @@ function isPublicPath(pathname: string): boolean {
   return PUBLIC_ROUTES.some((route) => pathname === route || pathname === `${route}/`);
 }
 
-function backendOrigin(): string {
-  const u =
-    import.meta.env.BACKEND_URL ??
-    import.meta.env.PUBLIC_BACKEND_URL ??
-    'http://localhost:3000';
-  return String(u).replace(/\/$/, '');
-}
-
 /** Producción (Node standalone) no tiene proxy de Vite: reenviar /api/* a Express (mismo origen :4321). */
 async function proxyApiToBackend(request: Request, pathname: string, search: string): Promise<Response> {
-  const target = `${backendOrigin()}${pathname}${search}`;
+  const target = `${backendBaseUrl()}${pathname}${search}`;
   const headers = new Headers(request.headers);
   headers.delete('host');
   headers.delete('connection');

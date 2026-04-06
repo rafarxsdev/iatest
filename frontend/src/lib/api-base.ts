@@ -14,18 +14,29 @@ export class ApiHttpError extends Error {
 }
 
 /**
+ * URL del API en Node (SSR, middleware). Prioriza process.env: en Docker la imagen se construye
+ * sin .env (.dockerignore); BACKEND_URL solo existe en runtime (p. ej. compose) y no puede ir
+ * incrustada vía import.meta.env en el bundle.
+ */
+function serverBackendBaseUrl(): string {
+  const raw =
+    process.env.BACKEND_URL ??
+    process.env.PUBLIC_BACKEND_URL ??
+    import.meta.env.BACKEND_URL ??
+    import.meta.env.PUBLIC_BACKEND_URL ??
+    'http://localhost:3000';
+  return String(raw).replace(/\/$/, '');
+}
+
+/**
  * URL base del API.
- * - SSR / middleware: siempre BACKEND_URL (servidor Astro → Express directo).
+ * - SSR / middleware: BACKEND_URL (servidor Astro → Express).
  * - Navegador: PUBLIC_BACKEND_URL si está definida; si no, cadena vacía = rutas relativas `/api/...`
- *   (mismo origen que Astro; requiere proxy en Vite en desarrollo).
+ *   (mismo origen que Astro; proxy Vite en dev o middleware en producción).
  */
 export function backendBaseUrl(): string {
   if (typeof window === 'undefined') {
-    const url =
-      import.meta.env.BACKEND_URL ??
-      import.meta.env.PUBLIC_BACKEND_URL ??
-      'http://localhost:3000';
-    return url.replace(/\/$/, '');
+    return serverBackendBaseUrl();
   }
   const pub = import.meta.env.PUBLIC_BACKEND_URL;
   if (pub !== undefined && String(pub).trim() !== '') {
