@@ -9,6 +9,11 @@
 #   DB_NAME=mydb ./install.sh            → sobreescribe nombre de BD
 #   ./install.sh --seed                  → incluye datos semilla
 #   ./install.sh --reset                 → elimina y recrea la BD (¡destructivo!)
+#   ./install.sh --reset --yes           → mismo reset sin preguntar (CI / Docker / AWS)
+# Env: INSTALL_RESET_CONFIRM=yes        → equivalente a --yes para --reset
+#
+# Si la BD ya tiene el esquema base (p. ej. security.permissions) y no usas --reset,
+# el script sale con un mensaje claro en lugar de fallar en CREATE TABLE.
 # =============================================================================
 
 set -euo pipefail
@@ -30,6 +35,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_FILE="${SCRIPT_DIR}/install.log"
 INCLUDE_SEED=false
 RESET_DB=false
+RESET_YES=false
 
 # =============================================================================
 # Parsear argumentos
@@ -38,13 +44,19 @@ for arg in "$@"; do
   case $arg in
     --seed)  INCLUDE_SEED=true ;;
     --reset) RESET_DB=true ;;
+    --yes|-y) RESET_YES=true ;;
     *)
       echo "❌ Argumento desconocido: $arg"
-      echo "   Uso: ./install.sh [--seed] [--reset]"
+      echo "   Uso: ./install.sh [--seed] [--reset] [--yes]"
       exit 1
       ;;
   esac
 done
+
+if [ "$RESET_YES" = true ] && [ "$RESET_DB" != true ]; then
+  echo "❌ --yes solo tiene efecto junto con --reset" >&2
+  exit 1
+fi
 
 # =============================================================================
 # Utilidades
@@ -199,6 +211,21 @@ drop_db() {
   log "WARN" "Base de datos eliminada: $DB_NAME"
 }
 
+# Comprueba si el esquema base de seguridad ya está aplicado (re-ejecutar migraciones falla en CREATE TABLE).
+base_schema_already_installed() {
+  local out
+  out="$(PGPASSWORD="$DB_PASSWORD" psql \
+    --host="$DB_HOST" \
+    --port="$DB_PORT" \
+    --username="$DB_USER" \
+    --dbname="$DB_NAME" \
+    -t -A \
+    --command="SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'security' AND table_name = 'permissions');" \
+    2>/dev/null)" || return 1
+  out="$(printf '%s' "$out" | tr -d '[:space:]')"
+  [[ "$out" == "t" ]]
+}
+
 # =============================================================================
 # Main
 # =============================================================================
@@ -210,6 +237,7 @@ echo "  BD   : $DB_NAME"
 echo "  User : $DB_USER"
 echo "  Seed : $INCLUDE_SEED"
 echo "  Reset: $RESET_DB"
+echo "  Yes  : $RESET_YES"
 echo "=============================================="
 echo ""
 
@@ -222,16 +250,29 @@ check_connection
 # Reset si se solicita
 if [ "$RESET_DB" = true ]; then
   echo ""
-  read -r -p "⚠️  ¿Confirmas que deseas ELIMINAR y recrear '$DB_NAME'? [s/N]: " confirm
-  if [[ "$confirm" != "s" && "$confirm" != "S" ]]; then
-    log "INFO" "Operación cancelada por el usuario"
-    exit 0
+  if [ "$RESET_YES" = true ] || [ "${INSTALL_RESET_CONFIRM:-}" = "yes" ]; then
+    log "WARN" "⚠️  Reset confirmado (--yes o INSTALL_RESET_CONFIRM=yes); se elimina '$DB_NAME'"
+  else
+    read -r -p "⚠️  ¿Confirmas que deseas ELIMINAR y recrear '$DB_NAME'? [s/N]: " confirm
+    if [[ "$confirm" != "s" && "$confirm" != "S" ]]; then
+      log "INFO" "Operación cancelada por el usuario"
+      exit 0
+    fi
   fi
   drop_db
 fi
 
 # Crear BD solo si hace falta (Docker suele crearla ya con POSTGRES_DB)
 ensure_database
+
+if [ "$RESET_DB" != true ] && base_schema_already_installed; then
+  log "ERR " "❌ La base '$DB_NAME' ya tiene el esquema instalado (tabla security.permissions)."
+  log "ERR " "   No se puede volver a ejecutar las migraciones desde cero sin borrar datos."
+  log "ERR " "   Opciones: (1) ./install.sh --reset --yes [--seed] para recrear la BD"
+  log "ERR " "   (2) INSTALL_RESET_CONFIRM=yes ./install.sh --reset [--seed]"
+  log "ERR " "   En Docker: ./db/install-docker.sh --reset --yes [--seed]"
+  exit 1
+fi
 
 # =============================================================================
 # Ejecución de scripts en orden

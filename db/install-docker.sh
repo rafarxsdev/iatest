@@ -8,6 +8,11 @@
 # Uso (desde la raíz del proyecto, con contenedores ya arriba):
 #   chmod +x db/install-docker.sh
 #   ./db/install-docker.sh --seed
+#
+# Si la BD ya tenía tablas de un intento anterior y falla «already exists»:
+#   ./db/install-docker.sh --reset --yes --seed
+#   (o INSTALL_RESET_CONFIRM=yes ./db/install-docker.sh --reset --seed)
+# Sin --reset, install.sh detecta el esquema y sale con mensaje explícito.
 # (No hace falta sudo si tu usuario puede usar docker; si usas sudo, la ruta
 #  al .env debe seguir siendo legible.)
 #
@@ -80,6 +85,7 @@ exec docker run --rm \
   -e DB_NAME="$DB_NAME" \
   -e DB_USER="$DB_USER" \
   -e DB_PASSWORD="$DB_PASSWORD" \
+  -e INSTALL_RESET_CONFIRM="${INSTALL_RESET_CONFIRM:-}" \
   postgres:16-alpine \
   sh -c '
     apk add --no-cache bash >/dev/null
