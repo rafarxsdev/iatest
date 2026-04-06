@@ -1,6 +1,7 @@
 # Variables de entorno (no secretos en el repo)
 .env
 .env.local
+.env.aws
 **/.env
 !**/.env.example
 *.pem
