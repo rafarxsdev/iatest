@@ -10,6 +10,8 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
+RUN chmod -R 755 /app/dist && ls -l /app/dist/server.js
+
 EXPOSE 3000
 
 CMD ["node", "dist/server.js"]

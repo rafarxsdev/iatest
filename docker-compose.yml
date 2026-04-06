@@ -21,6 +21,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    env_file:
+      - .env
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
@@ -37,13 +39,14 @@ services:
     ports:
       - '3000:3000'
     volumes:
-      - ./backend:/app
       - /app/node_modules
 
   frontend:
     build: ./frontend
     depends_on:
       - backend
+    env_file:
+      - .env
     environment:
       BACKEND_URL: http://backend:3000
       # Vacío: rutas /api relativas (requiere reverse proxy en el mismo host que el frontend).
@@ -54,7 +57,6 @@ services:
     ports:
       - '4321:4321'
     volumes:
-      - ./frontend:/app
       - /app/node_modules
 
 volumes:
