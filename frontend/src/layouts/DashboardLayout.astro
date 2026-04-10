@@ -5,9 +5,13 @@ import { canAccessAdminCards, canAccessAdminFilters, canAccessSystemAdmin } from
 
 interface Props {
   user: User;
+  /** Barra superior más estrecha y alineada a la izquierda (p. ej. solo en la página principal del dashboard). */
+  narrowHeader?: boolean;
+  /** Reserva espacio a la derecha (md+) para alinear con el panel «Agente seleccionado» y estira la zona del logout. */
+  reserveRightForAgentPanel?: boolean;
 }
 
-const { user } = Astro.props;
+const { user, narrowHeader = false, reserveRightForAgentPanel = false } = Astro.props;
 const pathNorm = Astro.url.pathname.replace(/\/$/, '') || '/';
 
 function isActive(path: string): boolean {
@@ -33,18 +37,37 @@ const initials = user.fullName
   <header
     class="fixed top-0 w-full z-50 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-xl shadow-[0_8px_24px_rgba(24,28,32,0.04)]"
   >
-    <div class="flex items-center justify-between px-6 h-16 w-full max-w-screen-xl mx-auto">
-      <div class="flex items-center gap-3">
+    <div
+      class:list={[
+        'flex items-center justify-between h-16 w-full px-4 sm:px-6',
+        reserveRightForAgentPanel && 'max-w-none mx-0 md:pr-[25.5rem]',
+        !reserveRightForAgentPanel && narrowHeader && 'max-w-xl mx-0',
+        !reserveRightForAgentPanel && !narrowHeader && 'max-w-screen-xl mx-auto',
+      ]}
+    >
+      <div class:list={['flex items-center shrink-0', narrowHeader ? 'gap-2' : 'gap-3']}>
         <div
-          class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden text-white text-xs font-bold"
+          class:list={[
+            'rounded-full bg-primary-container flex items-center justify-center overflow-hidden text-white font-bold',
+            narrowHeader ? 'w-7 h-7 text-[10px]' : 'w-8 h-8 text-xs',
+          ]}
         >
           {initials}
         </div>
-        <span class="text-xl font-bold tracking-tighter text-blue-800 dark:text-blue-200 font-headline"
+        <span
+          class:list={[
+            'font-bold tracking-tighter text-blue-800 dark:text-blue-200 font-headline',
+            narrowHeader ? 'text-lg' : 'text-xl',
+          ]}
           >{import.meta.env.PUBLIC_APP_TITLE}</span
         >
       </div>
-      <div class="flex items-center gap-2">
+      <div
+        class:list={[
+          'flex items-center gap-2 min-w-0',
+          reserveRightForAgentPanel && 'flex-1 justify-end md:pr-3',
+        ]}
+      >
         <button
           id="btn-logout"
           type="button"

@@ -30,7 +30,7 @@ try {
 }
 ---
 
-<DashboardLayout user={user}>
+<DashboardLayout user={user} narrowHeader reserveRightForAgentPanel>
   <main class="pt-20 px-4 pb-36 max-w-screen-xl mx-auto w-full">
     <h1 class="font-headline text-2xl font-bold text-on-surface tracking-tight mb-6">{appTitle}</h1>
     <Dashboard client:load filters={filters} initialCards={cards} initialTotal={initialTotal} user={user} />
