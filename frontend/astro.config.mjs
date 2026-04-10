@@ -13,8 +13,12 @@ export default defineConfig({
       exclude: ['src/lib/icons-catalog.ts'],
     },
     server: {
+      // true = 0.0.0.0: accesible en red local y evita “use --host to expose”
+      host: true,
+      port: 4321,
+      strictPort: false,
       proxy: {
-        // Misma origen que el frontend (:4321): la cookie JWT queda en localhost:4321
+        // Misma origen que el frontend: la cookie JWT queda en el origen del dev server
         '/api': {
           target: 'http://127.0.0.1:3000',
           changeOrigin: true,
