@@ -122,8 +122,8 @@ export default function Dashboard({ filters, initialCards, initialTotal, user }:
           />
         </section>
 
-        <aside className="md:fixed md:right-4 md:top-20 md:z-30 md:flex md:w-[24.5rem] md:flex-col">
-          <div className="flex h-[calc(100dvh-6rem)] min-h-0 flex-col overflow-hidden rounded-xl bg-surface-container-lowest p-4 shadow-[0_8px_24px_rgba(24,28,32,0.04)]">
+        <aside className="md:fixed md:right-4 md:top-2 md:z-[60] md:flex md:w-[24.5rem] md:flex-col">
+          <div className="flex h-[calc(100dvh-1rem)] min-h-0 flex-col overflow-hidden rounded-xl bg-surface-container-lowest p-4 shadow-[0_8px_24px_rgba(24,28,32,0.04)]">
             <div className="shrink-0">
               <h2 className="font-headline text-base font-bold text-on-surface">Agente seleccionado</h2>
               <p className="mt-1 text-xs text-on-surface-variant">
@@ -140,7 +140,7 @@ export default function Dashboard({ filters, initialCards, initialTotal, user }:
                   srcDoc={selectedEmbed.mode === 'srcdoc' ? selectedEmbed.srcDoc : undefined}
                   width={MODAL_IFRAME_WIDTH_PX}
                   height={MODAL_IFRAME_HEIGHT_PX}
-                  className="m-0 block max-w-full border-0 p-0"
+                  className="m-0 block max-w-full origin-top-left scale-[0.85] border-0 p-0"
                   style={{ width: MODAL_IFRAME_WIDTH_PX, height: MODAL_IFRAME_HEIGHT_PX, verticalAlign: 'top' }}
                   tabIndex={-1}
                   sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals"
