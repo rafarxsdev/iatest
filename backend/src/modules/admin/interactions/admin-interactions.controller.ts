@@ -1,5 +1,5 @@
-import { validate as isUuid } from 'uuid';
 import type { Request, Response } from 'express';
+import { isUuidString } from '@common/utils/uuid-string';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { AppError } from '@common/errors/app-error';
@@ -34,7 +34,7 @@ export class AdminInteractionsController {
 
   getUserInteractions = async (req: Request, res: Response): Promise<void> => {
     const { userId } = req.params;
-    if (!userId || !isUuid(userId)) {
+    if (!userId || !isUuidString(userId)) {
       throw new AppError('userId debe ser un UUID válido', 400);
     }
     const data = await this.adminInteractionsService.getUserInteractions(userId);
@@ -43,10 +43,10 @@ export class AdminInteractionsController {
 
   getHistory = async (req: Request, res: Response): Promise<void> => {
     const { userId, cardId } = req.params;
-    if (!userId || !isUuid(userId)) {
+    if (!userId || !isUuidString(userId)) {
       throw new AppError('userId debe ser un UUID válido', 400);
     }
-    if (!cardId || !isUuid(cardId)) {
+    if (!cardId || !isUuidString(cardId)) {
       throw new AppError('cardId debe ser un UUID válido', 400);
     }
     const data = await this.adminInteractionsService.getInteractionHistory(userId, cardId);
@@ -56,10 +56,10 @@ export class AdminInteractionsController {
   resetSingle = async (req: Request, res: Response): Promise<void> => {
     const r = req as AuthenticatedRequest;
     const { userId, cardId } = req.params;
-    if (!userId || !isUuid(userId)) {
+    if (!userId || !isUuidString(userId)) {
       throw new AppError('userId debe ser un UUID válido', 400);
     }
-    if (!cardId || !isUuid(cardId)) {
+    if (!cardId || !isUuidString(cardId)) {
       throw new AppError('cardId debe ser un UUID válido', 400);
     }
     const dto = plainToInstance(ResetInteractionsDto, req.body ?? {});
@@ -75,7 +75,7 @@ export class AdminInteractionsController {
   resetAll = async (req: Request, res: Response): Promise<void> => {
     const r = req as AuthenticatedRequest;
     const { userId } = req.params;
-    if (!userId || !isUuid(userId)) {
+    if (!userId || !isUuidString(userId)) {
       throw new AppError('userId debe ser un UUID válido', 400);
     }
     const dto = plainToInstance(ResetInteractionsDto, req.body ?? {});

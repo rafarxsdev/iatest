@@ -1,5 +1,5 @@
-import { validate as isUuid } from 'uuid';
 import type { Request, Response } from 'express';
+import { isUuidString } from '@common/utils/uuid-string';
 import type { AuthenticatedRequest } from '@common/types/request.type';
 import { AppError } from '@common/errors/app-error';
 import { InteractionsService } from './interactions.service';
@@ -20,7 +20,7 @@ export class InteractionsController {
 
   getByCardId = async (req: Request, res: Response): Promise<void> => {
     const { cardId } = req.params;
-    if (!cardId || !isUuid(cardId)) {
+    if (!cardId || !isUuidString(cardId)) {
       throw new AppError('cardId debe ser un UUID válido', 400);
     }
     const r = req as AuthenticatedRequest;
@@ -39,7 +39,7 @@ export class InteractionsController {
 
   interact = async (req: Request, res: Response): Promise<void> => {
     const { cardId } = req.params;
-    if (!cardId || !isUuid(cardId)) {
+    if (!cardId || !isUuidString(cardId)) {
       throw new AppError('cardId debe ser un UUID válido', 400);
     }
 

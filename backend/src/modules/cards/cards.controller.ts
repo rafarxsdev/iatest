@@ -1,5 +1,5 @@
-import { validate as isUuid } from 'uuid';
 import type { Request, Response } from 'express';
+import { isUuidString } from '@common/utils/uuid-string';
 import type { AuthenticatedRequest } from '@common/types/request.type';
 import { AppError } from '@common/errors/app-error';
 import { CardsService } from './cards.service';
@@ -24,7 +24,7 @@ export class CardsController {
     const filterRaw = req.query.filterId;
     let filterId: string | undefined;
     if (typeof filterRaw === 'string' && filterRaw.length > 0) {
-      if (!isUuid(filterRaw)) {
+      if (!isUuidString(filterRaw)) {
         throw new AppError('filterId debe ser un UUID válido', 400);
       }
       filterId = filterRaw;

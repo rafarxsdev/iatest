@@ -1,5 +1,5 @@
-import { validate as isUuid } from 'uuid';
 import type { Request, Response } from 'express';
+import { isUuidString } from '@common/utils/uuid-string';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { AppError } from '@common/errors/app-error';
@@ -24,7 +24,7 @@ export class PoliciesController {
   list = async (req: Request, res: Response): Promise<void> => {
     const r = req as AuthenticatedRequest;
     const cardId = req.params.cardId;
-    if (!cardId || !isUuid(cardId)) {
+    if (!cardId || !isUuidString(cardId)) {
       throw new AppError('cardId debe ser un UUID válido', 400);
     }
     const data = await this.policiesService.listByCard(r, cardId, clientIp(req), clientUserAgent(req));
@@ -34,7 +34,7 @@ export class PoliciesController {
   put = async (req: Request, res: Response): Promise<void> => {
     const r = req as AuthenticatedRequest;
     const cardId = req.params.cardId;
-    if (!cardId || !isUuid(cardId)) {
+    if (!cardId || !isUuidString(cardId)) {
       throw new AppError('cardId debe ser un UUID válido', 400);
     }
     const dto = plainToInstance(PutPolicyDto, req.body);
