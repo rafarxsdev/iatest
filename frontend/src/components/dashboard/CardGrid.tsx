@@ -4,26 +4,30 @@ import CardComponent from './Card';
 export interface CardGridProps {
   cards: Card[];
   isLoading?: boolean;
+  selectedCardId?: string | null;
+  onOpenAgent: (card: Card) => void;
 }
 
 function SkeletonCard() {
   return (
-    <div className="bg-surface-container-lowest rounded-xl p-5 flex items-start justify-between gap-4">
-      <div className="flex-1 space-y-3">
-        <div className="h-4 w-20 rounded-full animate-pulse bg-surface-container-high" />
-        <div className="h-5 w-3/4 max-w-xs rounded-md animate-pulse bg-surface-container-high" />
-        <div className="h-3 w-full rounded-md animate-pulse bg-surface-container-high" />
-        <div className="h-3 w-5/6 rounded-md animate-pulse bg-surface-container-high" />
+    <div className="min-w-0 w-full bg-surface-container-lowest rounded-xl p-4">
+      <div className="flex flex-row items-start gap-3">
+        <div className="h-12 w-12 shrink-0 rounded-full animate-pulse bg-surface-container-high" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="h-4 w-16 rounded-full animate-pulse bg-surface-container-high" />
+          <div className="h-5 w-full max-w-[12rem] rounded-md animate-pulse bg-surface-container-high" />
+        </div>
       </div>
-      <div className="w-12 h-12 shrink-0 rounded-full animate-pulse bg-surface-container-high" />
+      <div className="mt-4 h-11 w-full rounded-xl animate-pulse bg-surface-container-high" />
     </div>
   );
 }
 
-export default function CardGrid({ cards, isLoading }: CardGridProps) {
+export default function CardGrid({ cards, isLoading, selectedCardId, onOpenAgent }: CardGridProps) {
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
+        <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />
@@ -41,9 +45,14 @@ export default function CardGrid({ cards, isLoading }: CardGridProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
       {cards.map((card) => (
-        <CardComponent key={card.id} card={card} />
+        <CardComponent
+          key={card.id}
+          card={card}
+          onOpenAgent={onOpenAgent}
+          isSelected={selectedCardId === card.id}
+        />
       ))}
     </div>
   );
