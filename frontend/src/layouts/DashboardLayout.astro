@@ -60,47 +60,47 @@ const initials = user.fullName
 
   <nav
     class:list={[
-      'fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] rounded-3xl z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_8px_24px_rgba(24,28,32,0.06)] flex items-stretch px-2 py-2',
-      showAdminNav ? 'max-w-6xl' : 'max-w-md',
+      'fixed bottom-6 left-1/2 -translate-x-1/2 w-auto max-w-[min(96vw,100%)] rounded-3xl z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_8px_24px_rgba(24,28,32,0.06)] flex items-stretch justify-center gap-2 sm:gap-3 px-1.5 py-1.5',
+      showAdminNav ? 'max-w-3xl' : 'max-w-xs',
     ]}
   >
     <a
       class:list={[
-        'flex flex-1 min-w-0 flex-col items-center justify-center py-2 px-1 transition-transform duration-200',
+        'flex shrink-0 w-[3.5rem] sm:w-14 flex-col items-center justify-center py-1.5 px-0.5 transition-transform duration-200',
         isActive('/dashboard')
           ? 'bg-blue-600 dark:bg-blue-500 text-white rounded-2xl scale-105'
           : 'text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400',
       ]}
       href="/dashboard"
     >
-      <span class="material-symbols-outlined" data-icon="home">home</span>
-      <span class="font-inter text-[11px] font-semibold uppercase tracking-wider text-center">Inicio</span>
+      <span class="material-symbols-outlined text-[22px]" data-icon="home">home</span>
+      <span class="font-inter text-[10px] font-semibold uppercase tracking-wide text-center leading-tight">Inicio</span>
     </a>
     {showContentAdminNav ? (
       <>
         <a
           class:list={[
-            'flex flex-1 min-w-0 flex-col items-center justify-center py-2 px-1 transition-transform duration-200',
+            'flex shrink-0 w-[3.5rem] sm:w-14 flex-col items-center justify-center py-1.5 px-0.5 transition-transform duration-200',
             isActive('/admin/cards')
               ? 'bg-blue-600 dark:bg-blue-500 text-white rounded-2xl scale-105'
               : 'text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400',
           ]}
           href="/admin/cards"
         >
-          <span class="material-symbols-outlined">dashboard_customize</span>
-          <span class="font-inter text-[11px] font-semibold uppercase tracking-wider text-center">Agentes</span>
+          <span class="material-symbols-outlined text-[22px]">dashboard_customize</span>
+          <span class="font-inter text-[10px] font-semibold uppercase tracking-wide text-center leading-tight">Agentes</span>
         </a>
         <a
           class:list={[
-            'flex flex-1 min-w-0 flex-col items-center justify-center py-2 px-1 transition-transform duration-200',
+            'flex shrink-0 w-[3.5rem] sm:w-14 flex-col items-center justify-center py-1.5 px-0.5 transition-transform duration-200',
             isActive('/admin/filters')
               ? 'bg-blue-600 dark:bg-blue-500 text-white rounded-2xl scale-105'
               : 'text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400',
           ]}
           href="/admin/filters"
         >
-          <span class="material-symbols-outlined">filter_list</span>
-          <span class="font-inter text-[11px] font-semibold uppercase tracking-wider text-center">Categorías</span>
+          <span class="material-symbols-outlined text-[22px]">filter_list</span>
+          <span class="font-inter text-[10px] font-semibold uppercase tracking-wide text-center leading-tight">Categorías</span>
         </a>
       </>
     ) : null}
@@ -108,41 +108,41 @@ const initials = user.fullName
       <>
         <a
           class:list={[
-            'flex flex-1 min-w-0 flex-col items-center justify-center py-2 px-1 transition-transform duration-200',
+            'flex shrink-0 w-[3.5rem] sm:w-14 flex-col items-center justify-center py-1.5 px-0.5 transition-transform duration-200',
             isActive('/admin/interactions')
               ? 'bg-blue-600 dark:bg-blue-500 text-white rounded-2xl scale-105'
               : 'text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400',
           ]}
           href="/admin/interactions"
         >
-          <span class="material-symbols-outlined">manage_history</span>
-          <span class="font-inter text-[11px] font-semibold uppercase tracking-wider text-center">Usos</span>
+          <span class="material-symbols-outlined text-[22px]">manage_history</span>
+          <span class="font-inter text-[10px] font-semibold uppercase tracking-wide text-center leading-tight">Usos</span>
         </a>
         <a
           class:list={[
-            'flex flex-1 min-w-0 flex-col items-center justify-center py-2 px-1 transition-transform duration-200',
+            'flex shrink-0 w-[3.5rem] sm:w-14 flex-col items-center justify-center py-1.5 px-0.5 transition-transform duration-200',
             isActive('/admin/users')
               ? 'bg-blue-600 dark:bg-blue-500 text-white rounded-2xl scale-105'
               : 'text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400',
           ]}
           href="/admin/users"
         >
-          <span class="material-symbols-outlined">group</span>
-          <span class="font-inter text-[11px] font-semibold uppercase tracking-wider text-center">Usuarios</span>
+          <span class="material-symbols-outlined text-[22px]">group</span>
+          <span class="font-inter text-[10px] font-semibold uppercase tracking-wide text-center leading-tight">Usuarios</span>
         </a>
       </>
     ) : null}
     <a
       class:list={[
-        'flex flex-1 min-w-0 flex-col items-center justify-center py-2 px-1 transition-transform duration-200',
+        'flex shrink-0 w-[3.5rem] sm:w-14 flex-col items-center justify-center py-1.5 px-0.5 transition-transform duration-200',
         isActive('/profile')
           ? 'bg-blue-600 dark:bg-blue-500 text-white rounded-2xl scale-105'
           : 'text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400',
       ]}
       href="/profile"
     >
-      <span class="material-symbols-outlined" data-icon="person">person</span>
-      <span class="font-inter text-[11px] font-semibold uppercase tracking-wider text-center">Perfil</span>
+      <span class="material-symbols-outlined text-[22px]" data-icon="person">person</span>
+      <span class="font-inter text-[10px] font-semibold uppercase tracking-wide text-center leading-tight">Perfil</span>
     </a>
   </nav>
 </BaseLayout>
